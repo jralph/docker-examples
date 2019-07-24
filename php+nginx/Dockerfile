@@ -1,15 +1,21 @@
-# Install any dependencies and application libraries.
+# Create an installer image to handle composer packages and running of composer.
 FROM composer:1.8 as installer
 
 WORKDIR /var/app
 
 COPY ./composer.json composer.json
 
+# Extend the installer image to build dependencies for development.
+FROM installer as dev_deps
+
+RUN composer install --no-plugins --no-interaction --ignore-platform-reqs && \
+    composer dump-autoload
+
+# Extend the installer image to build dependencies for production.
+FROM dev_deps as prod_deps
+
 RUN composer install --no-dev --no-plugins --no-interaction --ignore-platform-reqs && \
     composer dump-autoload -o
-
-ENTRYPOINT ["composer", "--ansi"]
-CMD ["-"]
 
 # Build the base nginx image to use to serve assets
 # and proxy any php file requests to the backend.
@@ -46,7 +52,7 @@ HEALTHCHECK --interval=1m --timeout=1s CMD pgrep nginx || exit 1
 
 # Build the php fpm server to receive requests from
 # the nginx proxy server.
-FROM php:7.3-fpm-alpine as backend
+FROM php:7.3-fpm-alpine as php
 
 ARG uid=82
 ARG gid=82
@@ -97,8 +103,19 @@ WORKDIR /var/app/
 
 COPY public/index.php public/index.php
 COPY app app/
-COPY --from=installer /var/app/vendor vendor/
+COPY --from=dev_deps /var/app/vendor vendor/
 
 USER www-data
 
 EXPOSE 9000
+
+# Extend the backend php image to be able to run our tests.
+FROM php as test
+
+ENTRYPOINT ["/var/app/vendor/bin/phpunit"]
+CMD ["--bootstrap", "vendor/autoload.php", "tests"]
+
+# Setup our production-ready backend image.
+FROM php as backend
+
+COPY --from=prod_deps /var/app/vendor vendor/

@@ -33,7 +33,7 @@ services:
       PHP_HOST: backend:9000
     depends_on:
     - backend
-    - installer
+    - deps
   backend:
     build:
       context: .
@@ -44,10 +44,10 @@ services:
       target: /var/app
     networks:
     - app
-  installer:
+  deps:
     build:
       context: .
-      target: installer
+      target: dev_deps
     command: "install"
     volumes:
     - type: bind

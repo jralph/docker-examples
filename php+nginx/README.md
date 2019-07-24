@@ -23,6 +23,15 @@ docker app render | docker-compose -f - up server backend
 
 # Remove the application
 docker app render | docker-compose -f - down
+
+# Install al dependencies.
+docker app render | docker-compose -f - run deps install
+
+# Update dependencies.
+docker app render | docker-compose -f - run deps update
+
+# Add a package (phpunit in this example).
+docker app render | docker-compose -f - run deps require phpunit/phpunit ^8
 ```
 
 ## Kubernetes
@@ -44,11 +53,20 @@ kubectl delete -k ./docker/k8s/
 
 ```bash
 # Build the required images
-docker build -t pmconnect/docker-php-example-server --target server .
-docker build -t pmconnect/docker-php-example-backend --target backend .
+docker build -t docker-php-example-deps --target dev_deps .
+docker build -t docker-php-example-server --target server .
+docker build -t docker-php-example-backend --target backend .
 
 # Run both images.
 # Ensure to set the PHP_HOST variable on the server image to point to your exposed port on the backend image.
-docker run -it -p 9000:9000 pmconnect/docker-php-example-backend
-docker run -it -p 8080:8080 pmconnect/docker-php-example-server
+docker run -it -p 9000:9000 docker-php-example-backend
+docker run -it -p 8080:8080 docker-php-example-server
+
+# Run using local code.
+# Install deps.
+docker run -it -v $PWD:/var/app docker-php-example-deps install
+
+# Run with volumes.
+docker run -it -v $PWD:/var/app -p 9000:9000 docker-php-example-backend
+docker run -it -v $PWD/public:/var/app/public -p 8080:8080 docker-php-example-server
 ```
