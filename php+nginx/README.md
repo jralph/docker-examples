@@ -43,7 +43,7 @@ make run_dev php_host=host.docker.internal php_port=9000 server_port=8080
 make destroy
 ```
 
-## Docker App
+## Docker App + Docker Compose
 
 ```bash
 # Build required images.
@@ -65,7 +65,7 @@ docker app render | docker-compose -f - run deps update
 docker app render | docker-compose -f - run deps require phpunit/phpunit ^8
 ```
 
-## Kubernetes
+## Kubernetes + Kustomize
 
 ```bash
 # First, build your images and push them to a repository. (See standalone docker below).
