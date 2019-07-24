@@ -59,6 +59,8 @@ FROM php:7.3-fpm-alpine as php
 ARG uid=82
 ARG gid=82
 
+# 'set -eux' ensures the below scripts run as we would expect.
+# All env variables must exist and all commands will be printed.
 RUN set -eux; \
 	apk add --no-cache --virtual .build-deps \
 	  acl \
@@ -103,8 +105,8 @@ COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
 
 WORKDIR /var/app/
 
-COPY public/index.php public/index.php
-COPY app app/
+COPY --chown=www-data:www-data public/index.php public/index.php
+COPY --chown=www-data:www-data app app/
 COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 
 USER www-data
