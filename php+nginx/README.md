@@ -12,6 +12,12 @@ of the php backend server. By default, this variable is set to use `localhost:90
 This will work on kubernetes and standalone docker out of the box. For docker-compose,
 we can set this to the name of the backend service, `PHP_HOST=backend:9000`.
 
+## Makefile
+
+```bash
+
+```
+
 ## Docker App
 
 ```bash
@@ -37,19 +43,29 @@ docker app render | docker-compose -f - run deps require phpunit/phpunit ^8
 ## Kubernetes
 
 ```bash
-# Kustomize is used to make modifications to the kubernetes files dynamically.
-# Creates the following defintions:
-#     - service
-#     - deployment
-#     - ingress
-#     - networkpolicy
-kubectl apply -k ./docker/k8s/
+# First, build your images and push them to a repository. (See standalone docker below).
+# Copy the example deployment patch.
+cp docker/k8s/overlays/development/deployment-patch-example.yml docker/k8s/overlays/development/deployment-patch.yml 
+
+# Edit the deployment patch, replacing the example image names with the names of your built images.
+vim docker/k8s/overlays/development/deployment-patch.yml
+
+# For Development
+kubectl apply -k ./docker/k8s/overlays/development
 
 # Delete the application.
-kubectl delete -k ./docker/k8s/
+kubectl delete -k ./docker/k8s/overlays/development
+
+# For Production
+kubectl apply -k ./docker/k8s/base
+
+# Delete the application.
+kubectl delete -k ./docker/k8s/base
 ```
 
 ## Standalone Docker
+
+*Note: A Makefile is also included to run most things using standalone docker.*
 
 ```bash
 # Build the required images

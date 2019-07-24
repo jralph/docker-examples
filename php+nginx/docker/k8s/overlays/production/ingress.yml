@@ -8,10 +8,8 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: traefik
 spec:
-  tls:
-  - secretName: docker-php-example.app.k8s.sandboxed.xyz.crt
   rules:
-  - host: docker-php-example.app.k8s.sandboxed.xyz
+  - host: docker-php-example.example.com
     http:
       paths:
       - path: /

@@ -1,0 +1,6 @@
+- op: replace
+  path: /spec/template/spec/containers/0/image
+  value: your-namespace/your-server-image:latest # Add your built and pushed server image here.
+- op: replace
+  path: /spec/template/spec/containers/1/image
+  value: your-namespace/your-backend-image:latest # Add your built and pushed backend image here.

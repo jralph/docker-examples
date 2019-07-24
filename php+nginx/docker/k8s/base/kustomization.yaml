@@ -7,5 +7,3 @@ commonLabels:
 resources:
 - service.yml
 - deployment.yml
-- ingress.yml
-- network-policy.yml
