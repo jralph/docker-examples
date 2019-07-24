@@ -78,12 +78,16 @@ cp docker/k8s/overlays/development/deployment-patch-example.yml docker/k8s/overl
 vim docker/k8s/overlays/development/deployment-patch.yml
 
 # For Development
+# This will volume mount the project directory into each container.
+# Any file changes are reflected live.
 kubectl apply -k ./docker/k8s/overlays/development
 
 # Delete the application.
 kubectl delete -k ./docker/k8s/overlays/development
 
 # For Production
+# This runs the production images without any volumes.
+# It runs the code embedded in the image, so no updates take place when local files change.
 kubectl apply -k ./docker/k8s/base
 
 # Delete the application.
