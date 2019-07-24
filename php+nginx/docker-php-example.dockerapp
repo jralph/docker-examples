@@ -55,6 +55,14 @@ services:
       target: /var/app
     networks:
     - app
+  test:
+    build:
+      context: .
+      target: test
+    volumes:
+    - type: bind
+      source: $$PWD
+      target: /var/app
 
 networks:
   app:
