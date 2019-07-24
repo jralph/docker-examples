@@ -37,17 +37,17 @@ build: test
 
 # Spin up a production ready copy of the app.
 run: build
-  docker run -d -p $(server_port):8080 -e PHP_HOST=$(php_host):$(php_port) -n docker-php-example-server docker-php-example-server
-  docker run -d -p $(php_port):9000 -n docker-php-example-backend docker-php-example-backend
+	docker run -d -p $(server_port):8080 -e PHP_HOST=$(php_host):$(php_port) -n docker-php-example-server docker-php-example-server
+	docker run -d -p $(php_port):9000 -n docker-php-example-backend docker-php-example-backend
 
 # Spin up a dev ready copy of the app, mounting local files.
 run_dev: install
-  docker run -d -p $(server_port):8080 -e PHP_HOST=$(php_host):$(php_port) -n docker-php-example-server -v $(CURDIR)/public:/var/app/public docker-php-example-server
-  docker run -d -p $(php_port):9000 -n docker-php-example-backend -v $(CURDIR):/var/app docker-php-example-backend
+	docker run -d -p $(server_port):8080 -e PHP_HOST=$(php_host):$(php_port) -n docker-php-example-server -v $(CURDIR)/public:/var/app/public docker-php-example-server
+	docker run -d -p $(php_port):9000 -n docker-php-example-backend -v $(CURDIR):/var/app docker-php-example-backend
 
 # Destroy any setup containers for hte app.
 destroy:
-  docker container rm --force docker-php-example-server docker-php-example-backend
+	docker container rm --force docker-php-example-server docker-php-example-backend
 
 # Push the docker images to the pmconnect repos.
 push: build
