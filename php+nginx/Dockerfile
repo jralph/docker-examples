@@ -21,6 +21,8 @@ RUN composer install --no-dev --no-plugins --no-interaction --ignore-platform-re
 # and proxy any php file requests to the backend.
 FROM nginx:1.17-alpine as server
 
+ARG uid=82
+
 COPY ./public/img /var/app/public/img
 COPY ./public/favicon.ico /var/app/public/favicon.ico
 COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
@@ -29,7 +31,7 @@ COPY ./docker/nginx/site.template /etc/nginx/conf.d/site.template
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
 RUN set -eux; \
-  adduser -u 82 -D -S -G www-data www-data; \
+  adduser -u ${uid} -D -S -G www-data www-data; \
   touch /var/run/nginx.pid; \
   chown -R www-data:www-data /var/run/nginx.pid; \
   chown -R www-data:www-data /var/cache/nginx; \
