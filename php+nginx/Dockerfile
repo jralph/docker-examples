@@ -105,7 +105,7 @@ WORKDIR /var/app/
 
 COPY public/index.php public/index.php
 COPY app app/
-COPY --from=dev_deps /var/app/vendor vendor/
+COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 
 USER www-data
 
@@ -120,4 +120,6 @@ CMD ["--bootstrap", "vendor/autoload.php", "tests"]
 # Setup our production-ready backend image.
 FROM php as backend
 
-COPY --from=prod_deps /var/app/vendor vendor/
+RUN rm -rf /var/app/vendor
+
+COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
