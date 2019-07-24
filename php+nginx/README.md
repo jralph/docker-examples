@@ -34,10 +34,10 @@ make add_dev_dep package="phpunit/phpunit ^8"
 make test
 
 # Run a production friendly setup. 
-make run php_host=host.docker.internal php_port=9000 server_port=8080
+make run php_host=host.docker.internal server_port=8080
 
 # Run a development friendly setup. (Mounts local code as volumes)
-make run_dev php_host=host.docker.internal php_port=9000 server_port=8080
+make run_dev php_host=host.docker.internal server_port=8080
 
 # Cleanup any running containers. (prod or dev)
 make destroy
@@ -66,6 +66,8 @@ docker app render | docker-compose -f - run deps require phpunit/phpunit ^8
 ```
 
 ## Kubernetes + Kustomize
+
+*Note: To update dependencies, follow the same steps for the Makefile or standalone docker.*
 
 ```bash
 # First, build your images and push them to a repository. (See standalone docker below).

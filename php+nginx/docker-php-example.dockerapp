@@ -63,6 +63,8 @@ services:
     - type: bind
       source: $$PWD
       target: /var/app
+    networks:
+    - app
 
 networks:
   app:
