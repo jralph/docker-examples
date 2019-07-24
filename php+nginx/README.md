@@ -9,13 +9,38 @@ So here we split php-fpm and nginx into separate containers to run side by side.
 
 The nginx container contains an env variable that can be set, to configure the location
 of the php backend server. By default, this variable is set to use `localhost:9000`.
-This will work on kubernetes and standalone docker out of the box. For docker-compose,
+This will work on kubernetes out of the box. For docker-compose,
 we can set this to the name of the backend service, `PHP_HOST=backend:9000`.
 
 ## Makefile
 
 ```bash
+# Build required images.
+make build
 
+# Install all dependencies, including dev.
+make install
+
+# Update all dependencies, including dev.
+make update
+
+# Install a specific package.
+make add_dep package="phpunit/phpunit ^8"
+
+# Install a specific package for dev only.
+make add_dev_dep package="phpunit/phpunit ^8"
+
+# Run Tests
+make test
+
+# Run a production friendly setup. 
+make run php_host=host.docker.internal php_port=9000 server_port=8080
+
+# Run a development friendly setup. (Mounts local code as volumes)
+make run_dev php_host=host.docker.internal php_port=9000 server_port=8080
+
+# Cleanup any running containers. (prod or dev)
+make destroy
 ```
 
 ## Docker App
@@ -84,5 +109,5 @@ docker run -it -v $PWD:/var/app docker-php-example-deps install
 
 # Run with volumes.
 docker run -it -v $PWD:/var/app -p 9000:9000 docker-php-example-backend
-docker run -it -v $PWD/public:/var/app/public -p 8080:8080 docker-php-example-server
+docker run -it -v $PWD/public:/var/app/public -p 8080:8080 -e PHP_HOST=host.docker.internal:9000 docker-php-example-server
 ```
