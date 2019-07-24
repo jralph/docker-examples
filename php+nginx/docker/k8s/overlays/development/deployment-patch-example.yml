@@ -1,6 +1,39 @@
 - op: replace
   path: /spec/template/spec/containers/0/image
-  value: your-namespace/your-server-image:latest # Add your built and pushed server image here.
+  value: pmconnect/docker-php-example-server:latest # Add your built and pushed server image here.
 - op: replace
   path: /spec/template/spec/containers/1/image
-  value: your-namespace/your-backend-image:latest # Add your built and pushed backend image here.
+  value: pmconnect/docker-php-example-backend:latest # Add your built and pushed backend image here.
+- op: add
+  path: /spec/template/spec/volumes
+  value: []
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: backend-code
+    hostPath:
+      path: /path/to/project/dir
+      type: Directory
+- op: add
+  path: /spec/template/spec/volumes/-
+  value:
+    name: server-code
+    hostPath:
+      path: /path/to/project/dir/public
+      type: Directory
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts
+  value: []
+- op: add
+  path: /spec/template/spec/containers/0/volumeMounts/-
+  value:
+    name: server-code
+    mountPath: /var/app/public
+- op: add
+  path: /spec/template/spec/containers/1/volumeMounts
+  value: []
+- op: add
+  path: /spec/template/spec/containers/1/volumeMounts/-
+  value:
+    name: backend-code
+    mountPath: /var/app

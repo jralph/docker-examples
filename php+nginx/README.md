@@ -72,7 +72,9 @@ docker app render | docker-compose -f - run deps require phpunit/phpunit ^8
 # Copy the example deployment patch.
 cp docker/k8s/overlays/development/deployment-patch-example.yml docker/k8s/overlays/development/deployment-patch.yml 
 
-# Edit the deployment patch, replacing the example image names with the names of your built images.
+# Edit the deployment patch.
+# Replace the example image names with the names of your built images.
+# Replace the '/path/to/project/dir' paths with the path to your project directory.
 vim docker/k8s/overlays/development/deployment-patch.yml
 
 # For Development
