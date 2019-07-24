@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: docker-php-example
+  labels:
+    app.kubernetes.io/name: docker-php-example
+    app.kubernetes.io/component: webserver
+spec:
+  ports:
+  - name: http
+    targetPort: web
+    port: 80
+  selector:
+    app.kubernetes.io/name: docker-php-example
+    app.kubernetes.io/component: webserver

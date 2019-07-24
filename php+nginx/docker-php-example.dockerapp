@@ -1,0 +1,64 @@
+# This section contains your application metadata.
+# Version of the application
+version: 0.1.0
+# Name of the application
+name: docker-php-example
+# A short description of the application
+description: 
+# List of application maintainers with name and email for each
+maintainers:
+  - name: Joe
+    email: 
+
+---
+# This section contains the Compose file that describes your application services.
+version: "3.6"
+services:
+  server:
+    build:
+      context: .
+      target: server
+    volumes:
+    - type: bind
+      source: $$PWD/public/img/
+      target: /var/app/public/img
+    - type: bind
+      source: $$PWD/public/favicon.ico
+      target: /var/app/public/favicon.ico
+    networks:
+    - app
+    ports:
+    - 8080
+    environment:
+      PHP_HOST: backend:9000
+    depends_on:
+    - backend
+    - installer
+  backend:
+    build:
+      context: .
+      target: backend
+    volumes:
+    - type: bind
+      source: $$PWD
+      target: /var/app
+    networks:
+    - app
+  installer:
+    build:
+      context: .
+      target: installer
+    command: "install"
+    volumes:
+    - type: bind
+      source: $$PWD
+      target: /var/app
+    networks:
+    - app
+
+networks:
+  app:
+
+---
+# This section contains the default values for your application parameters.
+
