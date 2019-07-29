@@ -36,7 +36,7 @@ make test
 # Run a production friendly setup. 
 make run php_host=host.docker.internal server_port=8080
 
-# Run a development friendly setup. (Mounts local code as volumes)
+# Run a development friendly setup. (Mounts local code as volumes and watches logs)
 make run_dev php_host=host.docker.internal server_port=8080
 
 # Cleanup any running containers. (prod or dev)
