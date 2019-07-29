@@ -91,9 +91,9 @@ RUN set -eux; \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
 	apk add --no-cache --virtual .api-phpexts-rundeps fcgi $runDeps; \
-	apk del .build-deps; \
 	wget -O /usr/local/bin/php-fpm-healthcheck https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck; \
-  chmod +x /usr/local/bin/php-fpm-healthcheck
+  chmod +x /usr/local/bin/php-fpm-healthcheck; \
+  apk del .build-deps
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
