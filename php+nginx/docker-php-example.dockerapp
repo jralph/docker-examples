@@ -38,6 +38,10 @@ services:
     build:
       context: .
       target: backend
+      args:
+        with_xdebug: true
+    environment:
+      XDEBUG_CONFIG: idekey=PHPSTORM remote_enable=1 remote_host=${host_address} remote_port=${xdebug_port}
     volumes:
     - type: bind
       source: $$PWD
@@ -70,5 +74,7 @@ networks:
   app:
 
 ---
+host_address: host.docker.internal
+xdebug_port: 9000
 # This section contains the default values for your application parameters.
 

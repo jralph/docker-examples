@@ -36,6 +36,11 @@ class App
             throw new Exception("Received Error: \"{$_GET['error']}\"");
         }
 
+        if (isset($_GET['phpinfo'])) {
+            phpinfo();
+            return '';
+        }
+
         $datetime = date('Y-m-d H:i:s');
 
         return <<<EOF

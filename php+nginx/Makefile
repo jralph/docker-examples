@@ -5,6 +5,7 @@ test_image_name ?= docker-php-example-test
 deps_image_name ?= docker-php-example-deps
 backend_image_name ?= docker-php-example-backend
 server_image_name ?= docker-php-example-server
+dev_backend_image_name ?= docker-php-example-dev-backend
 
 # Set the remote repo/image names to push images to.
 server_remote_repo ?= pmconnect/docker-php-example-server
@@ -14,6 +15,10 @@ backend_remote_repo ?= pmconnect/docker-php-example-backend
 docker_network_name ?= docker-php-example
 docker_server_name ?= docker-php-example-server
 docker_backend_name ?= docker-php-example-backend
+
+# Local docker host address.
+host_address ?= host.docker.internal
+xdebug_port ?= 9000
 
 default: build
 
@@ -49,6 +54,7 @@ build_test:
 build: test
 	docker build -t $(server_image_name) --target server .
 	docker build -t $(backend_image_name) --target backend .
+	docker build -t $(dev_backend_image_name) --build-arg with_xdebug=true --target backend .
 
 # Setup the docker container network.
 create_docker_network:
@@ -60,8 +66,8 @@ run: destroy build create_docker_network
 	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) $(server_image_name)
 
 # Spin up a dev ready copy of the app, mounting local files, and watching backend logs.
-run_dev: destroy install create_docker_network
-	docker run -d --network=$(docker_network_name) --name $(docker_backend_name) -v $(CURDIR):/var/app $(backend_image_name)
+run_dev: destroy install build create_docker_network
+	docker run -d --network=$(docker_network_name) -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
 	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) -v $(CURDIR)/public:/var/app/public $(server_image_name)
 	docker logs -f $(docker_backend_name)
 

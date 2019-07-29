@@ -12,6 +12,20 @@ of the php backend server. By default, this variable is set to use `localhost:90
 This will work on kubernetes out of the box. For docker-compose,
 we can set this to the name of the backend service, `PHP_HOST=backend:9000`.
 
+
+## XDebug
+
+The dev versions of the image and setup include xdebug (with kubernetes if you build an image to run with the arg `with_xdebug` equal to true).
+
+To use xdebug, you will need to set the correct environment variables to tell it where to find
+your local host and ide session key.
+
+This can be done by setting the following environment variable:
+
+```bash
+XDEBUG_CONFIG="remote_enable=1 remote_host=host.docker.internal remote_port=9000"
+```
+
 ## Makefile
 
 ```bash

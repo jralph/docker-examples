@@ -37,16 +37,18 @@ RUN set -eux; \
   chown -R www-data:www-data /var/cache/nginx; \
   chown -R www-data:www-data /etc/nginx; \
   chown -R www-data:www-data /var/log/nginx; \
-  chown -R www-data:www-data /var/app
+  chown -R www-data:www-data /var/app;
 
 USER www-data
 
 WORKDIR /var/app/public
 
 ENV PHP_HOST=localhost:9000
+ENV NGINX_TIMEOUT=60s
+ENV NGINX_FASTCGI_READ_TIMEOUT=60
 
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["envsubst '${PHP_HOST}' < /etc/nginx/conf.d/site.template > /etc/nginx/conf.d/default.conf; exec nginx -g 'daemon off;'"]
+CMD ["envsubst '${PHP_HOST},${NGINX_TIMEOUT},${NGINX_FASTCGI_READ_TIMEOUT}' < /etc/nginx/conf.d/site.template > /etc/nginx/conf.d/default.conf; exec nginx -g 'daemon off;'"]
 
 EXPOSE 8080
 
@@ -58,6 +60,7 @@ FROM php:7.3-fpm-alpine as php
 
 ARG uid=82
 ARG gid=82
+ARG with_xdebug=false
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
@@ -91,6 +94,14 @@ RUN set -eux; \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
 	apk add --no-cache --virtual .api-phpexts-rundeps fcgi $runDeps; \
+	if [ $with_xdebug = "true" ]; then \
+	  pecl install xdebug; \
+	  docker-php-ext-enable xdebug; \
+	  echo "error_reporting = E_ALL" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
+    echo "display_startup_errors = On" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
+    echo "display_errors = On" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
+    echo "xdebug.remote_enable=1" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
+	fi; \
 	wget -O /usr/local/bin/php-fpm-healthcheck https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck; \
   chmod +x /usr/local/bin/php-fpm-healthcheck; \
   apk del .build-deps
@@ -103,7 +114,15 @@ RUN set -eux; \
 
 COPY ./docker/php/php-fpm.conf /usr/local/etc/php-fpm.conf
 COPY ./docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
-COPY ./docker/php/php.ini /usr/local/etc/php/php.ini
+COPY ./docker/php/php.ini $PHP_INI_DIR/php.ini
+
+# When xdebug is wanted, we should set the timeouts to unlimited to avoid connection drops during debugging.
+RUN set -eux; \
+    if [ $with_xdebug = "true" ]; then \
+      sed -i -E "s/request_terminate_timeout\s?=\s?([0-9]+)/request_terminate_timeout =0 /g" /usr/local/etc/php-fpm.d/www.conf; \
+      sed -i -E "s/max_execution_time\s?=\s?([0-9]+)/max_execution_time=0/g" $PHP_INI_DIR/php.ini; \
+      sed -i -E "s/max_input_time\s?=\s?([0-9]+)/max_input_time=0/g" $PHP_INI_DIR/php.ini; \
+    fi;
 
 WORKDIR /var/app/
 
@@ -129,16 +148,3 @@ FROM php as backend
 RUN rm -rf /var/app/vendor
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
-
-# Setup a dev only backend image, this can include dev only extensions such as xdebug.
-FROM php as dev_backend
-
-RUN apk --no-cache add autoconf alpine-sdk \
-    && pecl install xdebug-2.6.0 \
-    && docker-php-ext-enable xdebug \
-    && apk --no-cache del autoconf alpine-sdk \
-    && echo "xdebug.remote_enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
-
-RUN rm -rf /var/app/vendor
-
-COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/

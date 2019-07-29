@@ -7,4 +7,3 @@ $app->setupLogging();
 
 $content = $app->renderExamplePage();
 echo $content;
-
