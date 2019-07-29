@@ -91,7 +91,9 @@ RUN set -eux; \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
 	apk add --no-cache --virtual .api-phpexts-rundeps $runDeps; \
-	apk del .build-deps
+	apk del .build-deps; \
+	wget -O /usr/local/bin/php-fpm-healthcheck https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck; \
+  chmod +x /usr/local/bin/php-fpm-healthcheck
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
@@ -113,6 +115,8 @@ USER www-data
 
 EXPOSE 9000
 
+HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck
+
 # Extend the backend php image to be able to run our tests.
 FROM php as test
 
@@ -125,3 +129,16 @@ FROM php as backend
 RUN rm -rf /var/app/vendor
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
+
+# Setup a dev only backend image, this can include dev only extensions such as xdebug.
+FROM php as dev_backend
+
+RUN apk --no-cache add autoconf alpine-sdk \
+    && pecl install xdebug-2.6.0 \
+    && docker-php-ext-enable xdebug \
+    && apk --no-cache del autoconf alpine-sdk \
+    && echo "xdebug.remote_enable=1" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
+
+RUN rm -rf /var/app/vendor
+
+COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
