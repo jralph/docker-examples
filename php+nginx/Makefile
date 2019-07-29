@@ -63,6 +63,7 @@ run: build create_docker_network
 run_dev: install create_docker_network
 	docker run -d --network=$(docker_network_name) --name $(docker_backend_name) -v $(CURDIR):/var/app $(backend_image_name)
 	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) -v $(CURDIR)/public:/var/app/public $(server_image_name)
+	docker logs -f -t $(docker_server_name)
 
 # Destroy any setup containers for hte app.
 destroy:

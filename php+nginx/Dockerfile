@@ -50,7 +50,7 @@ CMD ["envsubst '${PHP_HOST}' < /etc/nginx/conf.d/site.template > /etc/nginx/conf
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=1m --timeout=1s CMD pgrep nginx || exit 1
+HEALTHCHECK --interval=10s --timeout=1s CMD pgrep nginx || exit 1
 
 # Build the php fpm server to receive requests from
 # the nginx proxy server.
@@ -90,7 +90,7 @@ RUN set -eux; \
 			| sort -u \
 			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
 	)"; \
-	apk add --no-cache --virtual .api-phpexts-rundeps $runDeps; \
+	apk add --no-cache --virtual .api-phpexts-rundeps fcgi $runDeps; \
 	apk del .build-deps; \
 	wget -O /usr/local/bin/php-fpm-healthcheck https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck; \
   chmod +x /usr/local/bin/php-fpm-healthcheck
@@ -115,7 +115,7 @@ USER www-data
 
 EXPOSE 9000
 
-HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck
+HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
 
 # Extend the backend php image to be able to run our tests.
 FROM php as test
