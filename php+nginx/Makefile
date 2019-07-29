@@ -1,13 +1,16 @@
 .PHONY: install update add_dep add_dev_dep test build_deps build_test build create_docker_network run run_dev destroy push
 
+# Set image names to use when building docker images.
 test_image_name ?= docker-php-example-test
 deps_image_name ?= docker-php-example-deps
 backend_image_name ?= docker-php-example-backend
 server_image_name ?= docker-php-example-server
 
+# Set the remote repo/image names to push images to.
 server_remote_repo ?= pmconnect/docker-php-example-server
 backend_remote_repo ?= pmconnect/docker-php-example-backend
 
+# Specify local docker network names.
 docker_network_name ?= docker-php-example
 docker_server_name ?= docker-php-example-server
 docker_backend_name ?= docker-php-example-backend
