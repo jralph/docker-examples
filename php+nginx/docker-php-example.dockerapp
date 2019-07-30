@@ -41,7 +41,7 @@ services:
       args:
         with_xdebug: true
     environment:
-      XDEBUG_CONFIG: idekey=PHPSTORM remote_enable=1 remote_host=${host_address} remote_port=${xdebug_port}
+      XDEBUG_CONFIG: remote_enable=1 remote_host=${host_address} remote_port=${xdebug_port}
     volumes:
     - type: bind
       source: $$PWD
