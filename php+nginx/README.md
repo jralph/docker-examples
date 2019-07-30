@@ -12,7 +12,6 @@ of the php backend server. By default, this variable is set to use `localhost:90
 This will work on kubernetes out of the box. For docker-compose,
 we can set this to the name of the backend service, `PHP_HOST=backend:9000`.
 
-
 ## XDebug
 
 The dev versions of the image and setup include xdebug (with kubernetes if you build an image to run with the arg `with_xdebug` equal to true).
