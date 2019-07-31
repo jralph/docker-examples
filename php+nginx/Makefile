@@ -44,7 +44,7 @@ add_dev_dep: build_deps
 
 # Test our package.
 test: build_test create_docker_network
-	docker run -it --network=$(docker_network_name) -v $(CURDIR):/var/app $(test_image_name)
+	docker run -it --network=$(docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app $(test_image_name)
 
 # Build an image to use to handle all installation and dependency management.
 build_deps:
@@ -71,8 +71,8 @@ run: destroy build create_docker_network
 
 # Spin up a dev ready copy of the app, mounting local files, and watching backend logs.
 run_dev: destroy install build create_docker_network
-	docker run -d --network=$(docker_network_name) -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
-	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) -v $(CURDIR)/public:/var/app/public $(server_image_name)
+	docker run -d --network=$(docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
+	docker run -d --network=$(docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) -v $(CURDIR)/public:/var/app/public $(server_image_name)
 	docker logs -f $(docker_backend_name)
 
 # Destroy any setup containers for hte app.
