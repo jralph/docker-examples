@@ -18,6 +18,10 @@ services:
     build:
       context: .
       target: server
+      args:
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
     volumes:
     - type: bind
       source: $$PWD/public/img/
@@ -39,7 +43,10 @@ services:
       context: .
       target: backend
       args:
-        with_xdebug: true
+        with_xdebug: "true"
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
     environment:
       XDEBUG_CONFIG: remote_enable=1 remote_host=${host_address} remote_port=${xdebug_port}
     volumes:
@@ -63,6 +70,10 @@ services:
     build:
       context: .
       target: test
+      args:
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
     volumes:
     - type: bind
       source: $$PWD
@@ -76,5 +87,7 @@ networks:
 ---
 host_address: host.docker.internal
 xdebug_port: 9000
+uid: 82
+gid: 82
 # This section contains the default values for your application parameters.
 

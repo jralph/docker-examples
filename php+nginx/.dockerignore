@@ -1,3 +1,4 @@
 vendor/
 *.dockerapp
 Makefile
+README.md

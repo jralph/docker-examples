@@ -1,4 +1,4 @@
-.PHONY: install update add_dep add_dev_dep test build_deps build_test build create_docker_network run run_dev destroy push
+.PHONY: install update add_dep add_dev_dep test build_deps build_test build create_docker_network run run_dev destroy push docker_compose
 
 # Set image names to use when building docker images.
 test_image_name ?= docker-php-example-test
@@ -19,6 +19,10 @@ docker_backend_name ?= docker-php-example-backend
 # Local docker host address.
 host_address ?= host.docker.internal
 xdebug_port ?= 9000
+
+# Set the uid and gid to use when building images.
+uid ?= 82
+gid ?= 82
 
 default: build
 
@@ -48,13 +52,13 @@ build_deps:
 
 # Build an image to use to handle all testing.
 build_test:
-	docker build -t $(test_image_name) --target test .
+	docker build -t $(test_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --target test .
 
 # Build the projects docker images.
 build: test
-	docker build -t $(server_image_name) --target server .
-	docker build -t $(backend_image_name) --target backend .
-	docker build -t $(dev_backend_image_name) --build-arg with_xdebug=true --target backend .
+	docker build -t $(server_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --target server .
+	docker build -t $(backend_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --target backend .
+	docker build -t $(dev_backend_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --build-arg with_xdebug=true --target backend .
 
 # Setup the docker container network.
 create_docker_network:
@@ -75,6 +79,14 @@ run_dev: destroy install build create_docker_network
 destroy:
 	-docker container rm --force $(docker_server_name) $(docker_backend_name)
 	-docker network rm $(docker_network_name)
+
+# Build docker-compose images ready to use.
+docker_compose_build:
+	docker app render --set uid=$(uid) --set gid=$(gid) | docker-compose -f - build
+
+# Render the docker compose file with the users uid/gid already set.
+docker_compose:
+	@docker app render --set uid=$(uid) --set gid=$(gid)
 
 # Push the docker images to the pmconnect repos.
 push: build
