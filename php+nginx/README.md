@@ -124,6 +124,7 @@ kubectl delete -k ./docker/k8s/base
 
 ```bash
 # Build the required images
+# The server/backend/test images support args for uid and gid to set your own to avoid permission issues when mounting volumes.
 docker build -t docker-php-example-deps --target dev_deps .
 docker build -t docker-php-example-server --target server .
 docker build -t docker-php-example-backend --target backend .
