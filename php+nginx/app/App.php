@@ -16,6 +16,9 @@ class App
      */
     private $logger;
 
+    /**
+     * @throws Exception
+     */
     public function setupLogging(): void
     {
         $this->logger = new Logger('log');
@@ -30,6 +33,10 @@ class App
         $errorHandler->registerFatalHandler();
     }
 
+    /**
+     * @return string
+     * @throws Exception
+     */
     public function renderExamplePage(): string
     {
         if (isset($_GET['error'])) {
