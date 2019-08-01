@@ -40,7 +40,7 @@ default: build
 
 # Install all dependencies, including dev dependencies.
 install: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) install --no-plugins --ignore-platform-reqs
+	docker run -it -v $(CURDIR):/var/app -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
 
 # Update all dependencies, including dev dependencies.
 update: build_deps
