@@ -45,7 +45,6 @@ class App
 
         return <<<EOF
         <img title="{$datetime}" src="img/docker.png" alt="docker logo">
-
         <p>{$datetime}</p>
         EOF;
     }
