@@ -71,6 +71,8 @@ make docker_compose uid=$(id -u) gid=$(id -g) | docker-compose -f - run server
 
 ## Docker App + Docker Compose
 
+*Note: Don't forget to set your uid/guid. This can be done by passing `--set uid=123 --set gid=456` to the `docker app render` command.*
+
 ```bash
 # Build required images.
 docker app render | docker-compose -f - build
@@ -89,6 +91,9 @@ docker app render | docker-compose -f - run deps update
 
 # Add a package (phpunit in this example).
 docker app render | docker-compose -f - run deps require phpunit/phpunit ^8
+
+# You can also use the makefile to automatically work out your uid/gid settings.
+make docker_compose | docker-compose -f - up server backend
 ```
 
 ## Kubernetes + Kustomize
