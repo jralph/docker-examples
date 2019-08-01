@@ -101,7 +101,7 @@ run: destroy build create_docker_network
 run_dev: destroy install build_dev create_docker_network
 	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(dev_docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
 	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(dev_docker_server_name) -v $(CURDIR)/public:/var/app/public $(dev_server_image_name)
-	docker logs -f $(docker_backend_name)
+	docker logs -f $(dev_docker_backend_name)
 
 # Destroy any setup containers for the app.
 destroy:
