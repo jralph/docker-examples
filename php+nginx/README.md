@@ -27,11 +27,12 @@ XDEBUG_CONFIG="remote_enable=1 remote_host=host.docker.internal remote_port=9000
 
 ## Makefile
 
-
-
 ```bash
 # Build required images.
 make build
+
+# Build required images for development.
+make build_dev
 
 # Install all dependencies, including dev.
 make install
@@ -47,6 +48,9 @@ make add_dev_dep package="phpunit/phpunit ^8"
 
 # Run Tests
 make test
+
+# Run tests for development. (Mounts local code as volumes)
+make test_dev
 
 # Run a production friendly setup. 
 make run php_host=host.docker.internal server_port=8080

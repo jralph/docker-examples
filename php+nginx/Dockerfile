@@ -139,6 +139,8 @@ HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
 # Extend the backend php image to be able to run our tests.
 FROM php as test
 
+COPY --chown=www-data:www-data tests tests/
+
 ENTRYPOINT ["/var/app/vendor/bin/phpunit"]
 CMD ["--bootstrap", "vendor/autoload.php", "tests"]
 
