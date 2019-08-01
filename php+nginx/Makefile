@@ -17,6 +17,9 @@ backend_remote_repo ?= pmconnect/docker-php-example-backend
 docker_network_name ?= docker-php-example
 docker_server_name ?= docker-php-example-server
 docker_backend_name ?= docker-php-example-backend
+dev_docker_network_name ?= docker-php-example-dev
+dev_docker_server_name ?= docker-php-example-dev-server
+dev_docker_backend_name ?= docker-php-example-dev-backend
 
 # Local docker host address.
 host_address ?= host.docker.internal
@@ -60,7 +63,7 @@ test: destroy build_test create_docker_network
 
 # Test our package locally.
 test_dev: destroy build_test_dev create_docker_network
-	docker run -it --network=$(docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app $(dev_test_image_name)
+	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app $(dev_test_image_name)
 
 # Build an image to use to handle all installation and dependency management.
 build_deps:
@@ -76,17 +79,18 @@ build_test_dev:
 
 # Build the projects docker images for production.
 build: test
-	docker build -t $(server_image_name) --target server .
-	docker build -t $(backend_image_name) --target backend .
+	docker build -t $(server_image_name) --cache-from=$(server_remote_repo) --target server .
+	docker build -t $(backend_image_name) --cache-from=$(backend_remote_repo) --target backend .
 
 # Build the projects docker images for development.
 build_dev: test
-	docker build -t $(dev_server_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --target server .
+	docker build -t $(dev_server_image_name) --build-arg uid=$(uid) --target server .
 	docker build -t $(dev_backend_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --build-arg with_xdebug=true --target backend .
 
 # Setup the docker container network.
 create_docker_network:
 	-docker network create $(docker_network_name)
+	-docker network create $(dev_docker_network_name)
 
 # Spin up a production ready copy of the app.
 run: destroy build create_docker_network
@@ -95,14 +99,14 @@ run: destroy build create_docker_network
 
 # Spin up a dev ready copy of the app, mounting local files, and watching backend logs.
 run_dev: destroy install build_dev create_docker_network
-	docker run -d --network=$(docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
-	docker run -d --network=$(docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) -v $(CURDIR)/public:/var/app/public $(server_image_name)
+	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(dev_docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
+	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(dev_docker_server_name) -v $(CURDIR)/public:/var/app/public $(dev_server_image_name)
 	docker logs -f $(docker_backend_name)
 
 # Destroy any setup containers for the app.
 destroy:
 	-docker container rm --force $(docker_server_name) $(docker_backend_name) $(dev_server_image_name) $(dev_backend_image_name)
-	-docker network rm $(docker_network_name)
+	-docker network rm $(docker_network_name) $(dev_docker_network_name)
 
 # Build docker-compose images ready to use.
 docker_compose_build:
