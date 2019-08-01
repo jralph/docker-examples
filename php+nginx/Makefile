@@ -105,7 +105,7 @@ run_dev: destroy install build_dev create_docker_network
 
 # Destroy any setup containers for the app.
 destroy:
-	-docker container rm --force $(docker_server_name) $(docker_backend_name) $(dev_server_image_name) $(dev_backend_image_name)
+	-docker container rm --force $(docker_server_name) $(docker_backend_name) $(dev_docker_server_name) $(dev_docker_backend_name)
 	-docker network rm $(docker_network_name) $(dev_docker_network_name)
 
 # Build docker-compose images ready to use.
