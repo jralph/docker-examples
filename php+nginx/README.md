@@ -25,7 +25,7 @@ This can be done by setting the following environment variable:
 XDEBUG_CONFIG="remote_enable=1 remote_host=host.docker.internal remote_port=9000"
 ```
 
-## Makefile
+## Makefile + Standalone Docker
 
 ```bash
 # Build required images.
@@ -60,13 +60,17 @@ make run_dev php_host=host.docker.internal server_port=8080
 
 # Cleanup any running containers. (prod or dev)
 make destroy
+```
 
+## Makefile + Docker Compose
+
+```bash
 # Build the docker-compose images using  your uid and gid.
 # (Optional, can be run without arguments to use defaults)
 make docker_compose_build uid=$(id -u) gid=$(id -g)
 
 # Make the docker file with your uid and gid and run the server image  through docker compose.
-make docker_compose uid=$(id -u) gid=$(id -g) | docker-compose -f - run server
+make docker_compose uid=$(id -u) gid=$(id -g) | docker-compose -f - up server backend
 ```
 
 ## Docker App + Docker Compose
