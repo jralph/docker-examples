@@ -140,9 +140,10 @@ docker run -it -p 8080:8080 docker-php-example-server
 
 # Run using local code.
 # Install deps.
+# Remember to set your uid/gid (using -u) if you're not running on OSX.
 docker run -it -v $PWD:/var/app docker-php-example-deps install
 
-# Run with volumes.
+# Remember to set your uid/gid (using -u) if you're not running on OSX.
 docker run -it -v $PWD:/var/app -p 9000:9000 docker-php-example-backend
 docker run -it -v $PWD/public:/var/app/public -p 8080:8080 -e PHP_HOST=host.docker.internal:9000 docker-php-example-server
 ```
