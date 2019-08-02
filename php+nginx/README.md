@@ -75,7 +75,7 @@ make docker_compose uid=$(id -u) gid=$(id -g) | docker-compose -f - up server ba
 
 ## Docker App + Docker Compose
 
-*Note: Don't forget to set your uid/guid. This can be done by passing `--set uid=123 --set gid=456` to the `docker app render` command.*
+*Note: Don't forget to set your uid/guid when not on osx. This can be done by passing `--set uid=123 --set gid=456` to the `docker app render` command.*
 
 ```bash
 # Build required images.
