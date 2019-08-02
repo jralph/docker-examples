@@ -115,7 +115,7 @@ cp docker/k8s/overlays/development/deployment-patch-example.yml docker/k8s/overl
 vim docker/k8s/overlays/development/deployment-patch.yml
 
 # Using Make
-# Make can do the above for you automaticaly.
+# Make can do the above for you automatically.
 make k8s_dev
 
 # For Development
