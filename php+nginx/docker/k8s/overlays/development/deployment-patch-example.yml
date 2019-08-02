@@ -1,4 +1,7 @@
 - op: replace
+  path: /spec/replicas
+  value: 1
+- op: replace
   path: /spec/template/spec/containers/0/image
   value: pmconnect/docker-php-example-server:latest # Add your built and pushed server image here.
 - op: replace
