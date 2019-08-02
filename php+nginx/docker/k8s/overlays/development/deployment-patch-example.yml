@@ -40,3 +40,9 @@
   value:
     name: backend-code
     mountPath: /var/app
+- op: add
+  path: /spec/template/spec/containers/0/imagePullPolicy
+  value: Never
+- op: add
+  path: /spec/template/spec/containers/1/imagePullPolicy
+  value: Never

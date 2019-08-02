@@ -117,10 +117,10 @@ docker_compose:
 	@docker app render --set uid=$(uid) --set gid=$(gid)
 
 k8s_dev: destroy install build test
-  /bin/cp -rf $(CURDIR)/docker/k8s/overlays/development/deployment-patch-example.yml $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
-  sed -i "s#/path/to/project/dir#$(CURDIR)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
-  sed -i "s#pmconnect/docker-php-example-server:latest#$(server_image_name)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
-  sed -i "s#pmconnect/docker-php-example-backend:latest#$(backend_image_name)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
+	/bin/cp -rf $(CURDIR)/docker/k8s/overlays/development/deployment-patch-example.yml $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
+	sed -i "s#/path/to/project/dir#$(CURDIR)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
+	sed -i "s#pmconnect/docker-php-example-server:latest#$(server_image_name)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
+	sed -i "s#pmconnect/docker-php-example-backend:latest#$(backend_image_name)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
 
 
 # Push the docker images to the pmconnect repos.
