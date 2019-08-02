@@ -114,6 +114,10 @@ cp docker/k8s/overlays/development/deployment-patch-example.yml docker/k8s/overl
 # Replace the '/path/to/project/dir' paths with the path to your project directory.
 vim docker/k8s/overlays/development/deployment-patch.yml
 
+# Using Make
+# Make can do the above for you automaticaly.
+make k8s_dev
+
 # For Development
 # This will volume mount the project directory into each container.
 # Any file changes are reflected live.
