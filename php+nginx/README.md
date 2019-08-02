@@ -142,11 +142,20 @@ kubectl delete -k ./docker/k8s/base
 docker build -t docker-php-example-deps --target dev_deps .
 docker build -t docker-php-example-server --target server .
 docker build -t docker-php-example-backend --target backend .
+docker build -t docker-php-example-tests --target test .
 
 # Run both images.
 # Ensure to set the PHP_HOST variable on the server image to point to your exposed port on the backend image.
 docker run -it -p 9000:9000 docker-php-example-backend
 docker run -it -p 8080:8080 docker-php-example-server
+
+# Tests
+# Test the production setup.
+docker run -it --network=docker-php-example docker-php-example-tests
+
+# Test in development using local code.
+# Remember to set your uid/gid (using -u) if you're not running on OSX.
+docker run -it --network=docker-php-example -v $(pwd):/var/app docker-php-example-tests
 
 # Run using local code.
 # Install deps.
@@ -154,6 +163,6 @@ docker run -it -p 8080:8080 docker-php-example-server
 docker run -it -v $PWD:/var/app docker-php-example-deps install
 
 # Remember to set your uid/gid (using -u) if you're not running on OSX.
-docker run -it -v $PWD:/var/app -p 9000:9000 docker-php-example-backend
-docker run -it -v $PWD/public:/var/app/public -p 8080:8080 -e PHP_HOST=host.docker.internal:9000 docker-php-example-server
+docker run -it -v $PWD:/var/app --network=docker-php-example -n backend docker-php-example-backend
+docker run -it -v $PWD/public:/var/app/public --network=docker-php-example -n server -p 8080:8080 -e PHP_HOST=backend:9000 docker-php-example-server
 ```
