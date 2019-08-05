@@ -24,7 +24,7 @@ spec:
         image: pmconnect/docker-php-example-server:latest
         imagePullPolicy: Always
         ports:
-        - name: web
+        - name: nginx
           containerPort: 8080
       - name: php
         image: pmconnect/docker-php-example-backend:latest
@@ -32,3 +32,8 @@ spec:
         ports:
         - name: fpm
           containerPort: 9000
+      - name: httpcache
+        imagePullPolicy: Always
+        ports:
+        - name: web
+          containerPort: 80
