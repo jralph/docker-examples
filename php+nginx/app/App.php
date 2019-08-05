@@ -50,6 +50,8 @@ class App
 
         $datetime = date('Y-m-d H:i:s');
 
+        header("Cache-Control: public, max-age: 3600, s-maxage: 3600");
+
         return <<<EOF
         <img title="{$datetime}" src="img/docker.png" alt="docker logo">
         <p>{$datetime}</p>
