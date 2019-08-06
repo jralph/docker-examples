@@ -157,7 +157,7 @@ RUN set -eux; \
     apt-get update -y || true; \
     apt-get install -y gettext-base; \
     apt-get clean; \
-    rm -rf /var/lib/apt/lists/*;
+    rm -rf /var/lib/apt/lists/*
 
 COPY ./docker/varnish/default.vcl.tmpl /etc/varnish/default.vcl.tmpl
 
