@@ -55,11 +55,10 @@ make test_dev
 # Run a production friendly setup. 
 make run php_host=host.docker.internal server_port=8080 httpcache_port=9090
 
-# Run a development friendly setup.
-# (Mounts local code as volumes and watches logs, httpcache is ignored as it won't work well with xdebug)
-make run_dev php_host=host.docker.internal server_port=8080
+# Run a development friendly setup. (Mounts local code as volumes and watches logs)
+make run_dev php_host=host.docker.internal server_port=8080 httpcache_port=9090
 
-# Run a development friendly setup with xdebug disabled. Here we can use the httpcache (varnish).
+# Run a development friendly setup with xdebug disabled.
 make run_dev php_host=host.docker.internal server_port=8080 httpcache_port=9090 with_xdebug=false
 
 # Cleanup any running containers. (prod or dev)
@@ -170,8 +169,7 @@ docker run -it --network=docker-php-example -v $(pwd):/var/app docker-php-exampl
 # Remember to set your uid/gid (using -u) if you're not running on OSX.
 docker run -it -v $PWD:/var/app docker-php-example-deps install
 
-# Remember to set your uid/gid (using -u) if you're not running on OSX and are mounting volumes.
+# Remember to set your uid/gid (using -u) if you're not running on OSX.
 docker run -it -v $PWD:/var/app --network=docker-php-example -n backend docker-php-example-backend
 docker run -it -v $PWD/public:/var/app/public --network=docker-php-example -n server -p 8080:8080 -e PHP_HOST=backend:9000 docker-php-example-server
-docker run -d --network=docker-php-example -p 9090:80 -e BACKEND_HOST=server -e BACKEND_PORT=8080 --name httpcache docker-php-example-httpcache
 ```

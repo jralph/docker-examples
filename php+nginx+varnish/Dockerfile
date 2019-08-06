@@ -161,8 +161,5 @@ RUN set -eux; \
 
 COPY ./docker/varnish/default.vcl.tmpl /etc/varnish/default.vcl.tmpl
 
-ENV BACKEND_HOST=localhost
-ENV BACKEND_PORT=8080
-
 ENTRYPOINT ["/bin/sh", "-c"]
 CMD ["envsubst '${BACKEND_HOST},${BACKEND_PORT}' < /etc/varnish/default.vcl.tmpl > /etc/varnish/default.vcl; docker-varnish-entrypoint varnishd -F -f /etc/varnish/default.vcl"]

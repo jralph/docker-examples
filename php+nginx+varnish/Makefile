@@ -16,7 +16,6 @@ dev_httpcache_image_name ?= $(project_name)-dev-httpcache
 # Set the remote repo/image names to push images to.
 server_remote_repo ?= pmconnect/docker-php-example-server
 backend_remote_repo ?= pmconnect/docker-php-example-backend
-httpcache_remote_repo ?= pmconnect/docker-php-example-httpcache
 
 # Specify local docker network names.
 docker_network_name ?= $(project_name)
@@ -138,8 +137,6 @@ k8s_dev: destroy install build test
 push: build
 	docker tag $(server_image_name) $(server_remote_repo)
 	docker tag $(backend_image_name) $(backend_remote_repo)
-	docker tag $(httpcache_image_name) $(httpcache_remote_repo)
 	docker push $(server_remote_repo)
 	docker push $(backend_remote_repo)
-	docker push $(httpcache_remote_repo)
 
