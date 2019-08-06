@@ -21,4 +21,3 @@ Unit tests are also included and are runnable through the makefile or through do
 - NGINX
 - Makefile
 - Unit Tests
-- Varnish

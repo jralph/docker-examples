@@ -150,16 +150,3 @@ FROM php as backend
 RUN rm -rf /var/app/vendor
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
-
-FROM varnish:6.2 as httpcache
-
-RUN set -eux; \
-    apt-get update -y || true; \
-    apt-get install -y gettext-base; \
-    apt-get clean; \
-    rm -rf /var/lib/apt/lists/*
-
-COPY ./docker/varnish/default.vcl.tmpl /etc/varnish/default.vcl.tmpl
-
-ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["envsubst '${BACKEND_HOST},${BACKEND_PORT}' < /etc/varnish/default.vcl.tmpl > /etc/varnish/default.vcl; docker-varnish-entrypoint varnishd -F -f /etc/varnish/default.vcl"]

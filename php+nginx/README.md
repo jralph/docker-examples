@@ -53,13 +53,10 @@ make test
 make test_dev
 
 # Run a production friendly setup. 
-make run php_host=host.docker.internal server_port=8080 httpcache_port=9090
+make run php_host=host.docker.internal server_port=8080
 
 # Run a development friendly setup. (Mounts local code as volumes and watches logs)
-make run_dev php_host=host.docker.internal server_port=8080 httpcache_port=9090
-
-# Run a development friendly setup with xdebug disabled.
-make run_dev php_host=host.docker.internal server_port=8080 httpcache_port=9090 with_xdebug=false
+make run_dev php_host=host.docker.internal server_port=8080
 
 # Cleanup any running containers. (prod or dev)
 make destroy
