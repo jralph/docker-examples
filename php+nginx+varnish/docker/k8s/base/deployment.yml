@@ -26,35 +26,14 @@ spec:
         ports:
         - name: nginx
           containerPort: 8080
-        resources:
-          limits:
-            cpu: 10m
-            memory: 10Mi
-          requests:
-            cpu: 5m
-            memory: 5Mi
       - name: php
         image: pmconnect/docker-php-example-backend:latest
         imagePullPolicy: Always
         ports:
         - name: fpm
           containerPort: 9000
-        resources:
-          limits:
-            cpu: 20m
-            memory: 20Mi
-          requests:
-            cpu: 5m
-            memory: 5Mi
       - name: httpcache
         imagePullPolicy: Always
         ports:
         - name: web
           containerPort: 80
-        resources:
-          limits:
-            cpu: 10m
-            memory: 10Mi
-          requests:
-            cpu: 5m
-            memory: 5Mi
