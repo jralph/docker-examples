@@ -151,6 +151,7 @@ RUN rm -rf /var/app/vendor
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
 
+# Setup our varnish cache image.
 FROM varnish:6.2 as httpcache
 
 RUN set -eux; \
