@@ -1,22 +1,3 @@
-# Create an installer image to handle composer packages and running of composer.
-FROM composer:1.8 as installer
-
-WORKDIR /var/app
-
-COPY ./composer.json composer.json
-
-# Extend the installer image to build dependencies for development.
-FROM installer as dev_deps
-
-RUN composer install --no-plugins --no-interaction --ignore-platform-reqs && \
-    composer dump-autoload
-
-# Extend the installer image to build dependencies for production.
-FROM dev_deps as prod_deps
-
-RUN composer install --no-dev --no-plugins --no-interaction --ignore-platform-reqs && \
-    composer dump-autoload -o
-
 # Build the base nginx image to use to serve assets
 # and proxy any php file requests to the backend.
 FROM nginx:1.17-alpine as server
@@ -54,8 +35,8 @@ EXPOSE 8080
 
 HEALTHCHECK --interval=10s --timeout=1s CMD pgrep nginx || exit 1
 
-# Build the php fpm server to receive requests from
-# the nginx proxy server.
+# Build our base php image. This is the image we will base all php workings from.
+# This includes acting as the production fpm server, running composer commands, running tests, and so on.
 FROM php:7.3-fpm-alpine as php
 
 ARG uid=82
@@ -110,7 +91,8 @@ RUN set -eux; \
 # All env variables must exist and all commands will be printed.
 RUN set -eux; \
   mkdir -p /var/app; \
-  chown -R www-data:www-data /var/app
+  chown -R www-data:www-data /var/app; \
+  chown -R www-data:www-data /usr/local/etc/php
 
 COPY ./docker/php/php-fpm.conf /usr/local/etc/php-fpm.conf
 COPY ./docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
@@ -128,25 +110,59 @@ WORKDIR /var/app/
 
 COPY --chown=www-data:www-data public/index.php public/index.php
 COPY --chown=www-data:www-data app app/
-COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 
 USER www-data
+
+# Create an installer image to handle composer packages and running of composer.
+FROM php as installer
+
+WORKDIR /var/app
+
+# 'set -eux' ensures the below scripts run as we would expect.
+# All env variables must exist and all commands will be printed.
+RUN set -eux; \
+    mkdir "${HOME}/bin"; \
+    sed -i -E "s/allow_url_fopen\s?=\s?[A-Za-z]+$/allow_url_fopen = On/g" $PHP_INI_DIR/php.ini; \
+    php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');"; \
+    php -r "if (hash_file('sha384', 'composer-setup.php') === 'a5c698ffe4b8e849a443b120cd5ba38043260d5c4023dbf93e1558871f1f07f58274fc6f4c93bcfd858c6bd0775cd8d1') { echo 'Installer verified'; } else { echo 'Installer corrupt'; unlink('composer-setup.php'); } echo PHP_EOL;"; \
+    php composer-setup.php --install-dir="${HOME}/bin" --filename=composer; \
+    php -r "unlink('composer-setup.php');"
+
+ENV PATH="/home/www-data/bin:${PATH}"
+
+COPY --chown=www-data:www-data ./composer.json composer.json
+
+ENTRYPOINT ["/usr/local/bin/composer"]
+CMD ["install"]
+
+# Extend the installer image to build dependencies for development.
+FROM installer as dev_deps
+
+RUN composer install --no-plugins --no-interaction --ignore-platform-reqs && \
+    composer dump-autoload
+
+# Extend the installer image to build dependencies for production.
+FROM dev_deps as prod_deps
+
+RUN composer install --no-dev --no-plugins --no-interaction --ignore-platform-reqs && \
+    composer dump-autoload -o
+
+# Setup our backend image.
+FROM php as backend
+
+RUN rm -rf /var/app/vendor
+
+COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
 
 EXPOSE 9000
 
 HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
 
 # Extend the backend php image to be able to run our tests.
-FROM php as test
+FROM backend as test
 
 COPY --chown=www-data:www-data tests tests/
+COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 
 ENTRYPOINT ["/var/app/vendor/bin/phpunit"]
 CMD ["--bootstrap", "vendor/autoload.php", "tests"]
-
-# Setup our production-ready backend image.
-FROM php as backend
-
-RUN rm -rf /var/app/vendor
-
-COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
