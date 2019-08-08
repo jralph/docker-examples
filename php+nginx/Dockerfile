@@ -142,12 +142,14 @@ CMD ["install"]
 FROM installer as dev_deps
 
 RUN composer install --no-interaction; \
+    composer clear-cache; \
     composer dump-autoload
 
 # Extend the installer image to build dependencies for production.
 FROM installer as prod_deps
 
 RUN composer install --no-dev --no-interaction; \
+    composer clear-cache; \
     composer dump-autoload -o
 
 # Setup our backend image.
