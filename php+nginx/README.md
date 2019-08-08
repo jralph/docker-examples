@@ -143,15 +143,15 @@ kubectl delete -k ./docker/k8s/base
 # Build the required images
 # The server/backend/test images support args for uid and gid to set your own to avoid permission issues when mounting volumes.
 # Don't forget to build these with the build args 'uid' and 'gid' if you want to run the image locally with mounted volumes.
-docker build -t docker-php-example-deps --target dev_deps .
+docker build -t docker-php-example-installer --target installer .
 docker build -t docker-php-example-server --target server .
 docker build -t docker-php-example-backend --target backend .
 docker build -t docker-php-example-tests --target test .
 
 # Run both images.
 # Ensure to set the PHP_HOST variable on the server image to point to your exposed port on the backend image.
-docker run -it -p 9000:9000 docker-php-example-backend
-docker run -it -p 8080:8080 docker-php-example-server
+docker run -it -p 9000:9000 --network=docker-php-example --name=backend docker-php-example-backend
+docker run -it -p 8080:8080 --network=docker-php-example --name=server -e PHP_HOST=backend:9000 docker-php-example-server
 
 # Tests
 # Test the production setup.
@@ -164,7 +164,7 @@ docker run -it --network=docker-php-example -v $(pwd):/var/app docker-php-exampl
 # Run using local code.
 # Install deps.
 # Remember to set your uid/gid (using -u) if you're not running on OSX.
-docker run -it -v $PWD:/var/app docker-php-example-deps install
+docker run -it -v $PWD:/var/app docker-php-example-installer install
 
 # Remember to set your uid/gid (using -u) if you're not running on OSX.
 docker run -it -v $PWD:/var/app --network=docker-php-example -n backend docker-php-example-backend
