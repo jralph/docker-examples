@@ -1,6 +1,10 @@
+# Set arguments to set and change software versions.
+ARG NGINX_VERSION=1.17
+ARG PHP_VERSION=7.3
+
 # Build the base nginx image to use to serve assets
 # and proxy any php file requests to the backend.
-FROM nginx:1.17-alpine as server
+FROM nginx:${NGINX_VERSION}-alpine as server
 
 ARG uid=82
 
@@ -37,7 +41,7 @@ HEALTHCHECK --interval=10s --timeout=1s CMD pgrep nginx || exit 1
 
 # Build our base php image. This is the image we will base all php workings from.
 # This includes acting as the production fpm server, running composer commands, running tests, and so on.
-FROM php:7.3-fpm-alpine as php
+FROM php:${PHP_VERSION}-fpm-alpine as php
 
 ARG uid=82
 ARG gid=82
@@ -46,44 +50,44 @@ ARG with_xdebug=false
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
 RUN set -eux; \
-	apk add --no-cache --virtual .build-deps \
-	  acl \
-	  file \
-	  gettext \
-	  git \
-	  shadow \
-		$PHPIZE_DEPS \
-		icu-dev \
-		libzip-dev \
-		zlib-dev \
-	; \
-	usermod -u ${uid} www-data; \
+  apk add --no-cache --virtual .build-deps \
+    acl \
+    file \
+    gettext \
+    git \
+    shadow \
+    $PHPIZE_DEPS \
+    icu-dev \
+    libzip-dev \
+    zlib-dev \
+  ; \
+  usermod -u ${uid} www-data; \
   groupmod -g ${gid} www-data; \
-	docker-php-ext-configure zip --with-libzip; \
-	docker-php-ext-install -j$(nproc) \
-		intl \
-		zip \
-		bcmath \
-	; \
-	docker-php-ext-enable \
-		opcache \
-	; \
-	runDeps="$( \
-		scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
-			| tr ',' '\n' \
-			| sort -u \
-			| awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
-	)"; \
-	apk add --no-cache --virtual .api-phpexts-rundeps fcgi $runDeps; \
-	if [ $with_xdebug = "true" ]; then \
-	  pecl install xdebug; \
-	  docker-php-ext-enable xdebug; \
-	  echo "error_reporting = E_ALL" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
+  docker-php-ext-configure zip --with-libzip; \
+  docker-php-ext-install -j$(nproc) \
+    intl \
+    zip \
+    bcmath \
+  ; \
+  docker-php-ext-enable \
+    opcache \
+  ; \
+  runDeps="$( \
+    scanelf --needed --nobanner --format '%n#p' --recursive /usr/local/lib/php/extensions \
+      | tr ',' '\n' \
+      | sort -u \
+      | awk 'system("[ -e /usr/local/lib/" $1 " ]") == 0 { next } { print "so:" $1 }' \
+  )"; \
+  apk add --no-cache --virtual .api-phpexts-rundeps fcgi $runDeps; \
+  if [ $with_xdebug = "true" ]; then \
+    pecl install xdebug; \
+    docker-php-ext-enable xdebug; \
+    echo "error_reporting = E_ALL" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
     echo "display_startup_errors = On" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
     echo "display_errors = On" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
     echo "xdebug.remote_enable=1" >> $PHP_INI_DIR/docker-php-ext-xdebug.ini; \
-	fi; \
-	wget -O /usr/local/bin/php-fpm-healthcheck https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck; \
+  fi; \
+  wget -O /usr/local/bin/php-fpm-healthcheck https://raw.githubusercontent.com/renatomefi/php-fpm-healthcheck/master/php-fpm-healthcheck; \
   chmod +x /usr/local/bin/php-fpm-healthcheck; \
   apk del .build-deps
 
@@ -110,13 +114,12 @@ WORKDIR /var/app/
 
 COPY --chown=www-data:www-data public/index.php public/index.php
 COPY --chown=www-data:www-data app app/
+COPY --chown=www-data:www-data composer.json composer.lock ./
 
 USER www-data
 
 # Create an installer image to handle composer packages and running of composer.
 FROM php as installer
-
-WORKDIR /var/app
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
@@ -130,7 +133,7 @@ RUN set -eux; \
 
 ENV PATH="/home/www-data/bin:${PATH}"
 
-COPY --chown=www-data:www-data ./composer.json composer.json
+# This is where you could run any extra commands to configure installers. Such as authenticating composer to private repos.
 
 ENTRYPOINT ["/usr/local/bin/composer"]
 CMD ["install"]
@@ -138,19 +141,17 @@ CMD ["install"]
 # Extend the installer image to build dependencies for development.
 FROM installer as dev_deps
 
-RUN composer install --no-plugins --no-interaction --ignore-platform-reqs && \
+RUN composer install --no-interaction; \
     composer dump-autoload
 
 # Extend the installer image to build dependencies for production.
-FROM dev_deps as prod_deps
+FROM installer as prod_deps
 
-RUN composer install --no-dev --no-plugins --no-interaction --ignore-platform-reqs && \
+RUN composer install --no-dev --no-interaction; \
     composer dump-autoload -o
 
 # Setup our backend image.
 FROM php as backend
-
-RUN rm -rf /var/app/vendor
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
 
@@ -161,6 +162,8 @@ HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
 # Extend the backend php image to be able to run our tests.
 FROM backend as test
 
+# Copy over any requirements to run tests.
+# This could be extra binaries build in your dev deps (such as vendor folder or bin folders).
 COPY --chown=www-data:www-data tests tests/
 COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 
