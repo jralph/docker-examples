@@ -141,16 +141,17 @@ CMD ["install"]
 # Extend the installer image to build dependencies for development.
 FROM installer as dev_deps
 
-RUN composer install --no-interaction; \
-    composer clear-cache; \
-    composer dump-autoload
+# Run any required composer scripts to build your dependencies.
+RUN composer install --prefer-dist --no-suggest --no-scripts --no-interaction; \
+    composer clear-cache
 
 # Extend the installer image to build dependencies for production.
 FROM installer as prod_deps
 
-RUN composer install --no-dev --no-interaction; \
+# Run any required composer scripts to build your dependencies.
+RUN composer install --no-dev --prefer-dist --no-suggest --no-scripts --no-interaction; \
     composer clear-cache; \
-    composer dump-autoload -o
+    composer dump-autoload --classmap-authoritative --no-dev
 
 # Setup our backend image.
 FROM php as backend
