@@ -30,3 +30,16 @@ Unit tests are also included and are runnable through the makefile or through do
 - NGINX
 - Makefile
 - Unit Tests
+
+## php+nginx+symfony+go
+
+### Included Tech
+- Kubernetes
+- Docker Compose
+- Docker App
+- PHP
+- NGINX
+- Makefile
+- Unit Tests
+- Symfony Framework
+- Go Queue/Job Workers
