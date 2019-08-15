@@ -41,30 +41,6 @@ endif
 
 default: build
 
-# Install all dependencies, including dev dependencies.
-install: build_deps
-	docker run -it -v $(CURDIR):/var/app -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
-
-# Update all dependencies, including dev dependencies.
-update: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) update --no-plugins --ignore-platform-reqs
-
-# Add a dependency package.
-add_dep: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) require --no-plugins --ignore-platform-reqs $(package)
-
-# Add a dev-only dependency package.
-add_dev_dep: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) require --no-plugins --ignore-platform-reqs --dev $(package)
-
-# Test our package for production.
-test: destroy build_test create_docker_network
-	docker run -it --network=$(docker_network_name) $(test_image_name)
-
-# Test our package locally.
-test_dev: destroy build_test_dev create_docker_network
-	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app $(dev_test_image_name)
-
 # Build an image to use to handle all installation and dependency management.
 build_deps:
 	docker build -t $(deps_image_name) --target dev_deps .
@@ -91,6 +67,30 @@ build_dev: test
 create_docker_network:
 	-docker network create $(docker_network_name)
 	-docker network create $(dev_docker_network_name)
+
+# Install all dependencies, including dev dependencies.
+install: build_deps
+	docker run -it -v $(CURDIR):/var/app -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
+
+# Update all dependencies, including dev dependencies.
+update: build_deps
+	docker run -it -v $(CURDIR):/var/app $(deps_image_name) update --no-plugins --ignore-platform-reqs
+
+# Add a dependency package.
+add_dep: build_deps
+	docker run -it -v $(CURDIR):/var/app $(deps_image_name) require --no-plugins --ignore-platform-reqs $(package)
+
+# Add a dev-only dependency package.
+add_dev_dep: build_deps
+	docker run -it -v $(CURDIR):/var/app $(deps_image_name) require --no-plugins --ignore-platform-reqs --dev $(package)
+
+# Test our package for production.
+test: destroy build_test create_docker_network
+	docker run -it --network=$(docker_network_name) $(test_image_name)
+
+# Test our package locally.
+test_dev: destroy build_test_dev create_docker_network
+	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app $(dev_test_image_name)
 
 # Spin up a production ready copy of the app.
 run: destroy build create_docker_network
