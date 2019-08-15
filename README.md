@@ -2,6 +2,15 @@
 
 This repository contains various examples of using docker and related tech.
 
+## Disclaimer
+
+Please note that these examples are, well, examples. When adapting to a specific project you will
+likely need to change various parts of the configuration to match your way of working and to cater for
+extra needs such as privately hosted package repositories and authentication.
+
+These examples try to cover as much of the basic setup as possible without getting into project specifics
+and business logic.
+
 ## php+nginx
 
 This example includes the setup of a basic bare-bones php project and getting it up and running
