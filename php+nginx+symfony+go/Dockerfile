@@ -8,10 +8,9 @@ FROM nginx:${NGINX_VERSION}-alpine as server
 
 ARG uid=82
 
-COPY ./public/img /var/app/public/img/
-COPY ./public/favicon.ico /var/app/public/favicon.ico
-COPY ./docker/nginx/nginx.conf /etc/nginx/nginx.conf
-COPY ./docker/nginx/site.template /etc/nginx/conf.d/site.template
+COPY api/public/bundles /var/app/public/bundles
+COPY docker/nginx/nginx.conf /etc/nginx/nginx.conf
+COPY docker/nginx/site.template /etc/nginx/conf.d/site.template
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
@@ -66,6 +65,7 @@ RUN set -eux; \
   docker-php-ext-configure zip --with-libzip; \
   docker-php-ext-install -j$(nproc) \
     intl \
+    pdo_mysql \
     zip \
     bcmath \
   ; \
@@ -112,9 +112,13 @@ RUN set -eux; \
 
 WORKDIR /var/app/
 
-COPY --chown=www-data:www-data public/index.php public/index.php
-COPY --chown=www-data:www-data app app/
-COPY --chown=www-data:www-data composer.json composer.lock ./
+COPY --chown=www-data:www-data api/public/index.php public/index.php
+COPY --chown=www-data:www-data api/config ./config
+COPY --chown=www-data:www-data api/bin ./bin
+COPY --chown=www-data:www-data api/src ./src
+COPY --chown=www-data:www-data api/templates ./templates
+COPY --chown=www-data:www-data api/translations ./translations
+COPY --chown=www-data:www-data api/.env.dist api/symfony.lock api/composer.json api/composer.lock ./
 
 USER www-data
 
@@ -125,7 +129,12 @@ FROM php as installer
 # All env variables must exist and all commands will be printed.
 COPY --from=composer:1.9 /usr/bin/composer /usr/local/bin/composer
 
-ENV PATH="/home/www-data/bin:${PATH}"
+RUN set -eux; \
+    sed -i -E "s/allow_url_fopen\s*=\s*[A-Za-z]+/allow_url_fopen = On/g" $PHP_INI_DIR/php.ini; \
+    composer global require "symfony/flex" --prefer-dist --no-progress --no-suggest --classmap-authoritative;
+
+
+ENV PATH="/home/www-data/.composer/vendor/bin:${PATH}"
 
 # This is where you could run any extra commands to configure installers. Such as authenticating composer to private repos.
 
@@ -136,14 +145,16 @@ CMD ["install"]
 FROM installer as dev_deps
 
 # Run any required composer scripts to build your dependencies.
-RUN composer install --prefer-dist --no-suggest --no-scripts --no-interaction; \
+RUN set -eux; \
+    composer install --prefer-dist --no-suggest --no-interaction; \
     composer clear-cache
 
 # Extend the installer image to build dependencies for production.
 FROM installer as prod_deps
 
 # Run any required composer scripts to build your dependencies.
-RUN composer install --no-dev --prefer-dist --no-suggest --no-scripts --no-interaction; \
+RUN set -eux; \
+    composer install --no-dev --prefer-dist --no-suggest --no-interaction; \
     composer clear-cache; \
     composer dump-autoload --classmap-authoritative --no-dev
 
@@ -157,12 +168,17 @@ EXPOSE 9000
 HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
 
 # Extend the backend php image to be able to run our tests.
-FROM backend as test
+FROM installer as test
 
 # Copy over any requirements to run tests.
 # This could be extra binaries build in your dev deps (such as vendor folder or bin folders).
-COPY --chown=www-data:www-data tests tests/
+COPY --chown=www-data:www-data api/tests tests/
+COPY --chown=www-data:www-data api/phpunit.xml.dist .
 COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 
-ENTRYPOINT ["/var/app/vendor/bin/phpunit"]
-CMD ["--bootstrap", "vendor/autoload.php", "tests"]
+ENV APP_ENV=test
+
+RUN set -eux; \
+    bin/phpunit install
+
+ENTRYPOINT ["/var/app/bin/phpunit"]

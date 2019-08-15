@@ -1,0 +1,19 @@
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  name: docker-php-example
+  labels:
+    app.kubernetes.io/name: docker-php-example
+    app.kubernetes.io/component: webserver
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: docker-php-example
+      app.kubernetes.io/component: webserver
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          purpose: loadbalancing
+  policyTypes:
+  - Ingress
