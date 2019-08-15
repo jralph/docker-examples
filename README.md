@@ -20,7 +20,7 @@ It includes examples for running using docker-app+docker-compose, kubernetes, an
 
 It also includes a makefile for ease of use, for when running through standalone docker.
 
-Unit tests are also included and are runnable through the makefile or through docker app/docker compose.
+Basic unit tests are also included and are runnable through the makefile or through docker app/docker compose.
 
 ### Included Tech
 - Kubernetes
@@ -32,6 +32,15 @@ Unit tests are also included and are runnable through the makefile or through do
 - Unit Tests
 
 ## php+nginx+symfony+go
+
+This example includes the setup of a symfony php project and gettign it up and running using nginx
+and php-fpm, in separate containers.
+
+It also includes using Go applications to run as queue listeners/workers to respond to symfony events/tasks.
+
+It includes examples for usign docker-app+docker-compose, kubernetes, standalone docker, and a makefile for ease of use.
+
+Basic unit tests are included as an example.
 
 ### Included Tech
 - Kubernetes
