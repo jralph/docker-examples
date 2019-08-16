@@ -6,8 +6,7 @@ monolog:
             handler: nested
             excluded_http_codes: [404, 405]
         nested:
-            type: stream
-            path: "php://stderr"
+            type: error_log
             level: debug
         console:
             type: console
