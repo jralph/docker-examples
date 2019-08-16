@@ -55,8 +55,8 @@ build_test_dev:
 
 # Build the projects docker images for production.
 build: test
-	docker build -t $(server_image_name) --cache-from=$(server_remote_repo) --target server .
-	docker build -t $(backend_image_name) --cache-from=$(backend_remote_repo) --target backend .
+	docker build -t $(server_image_name) --target server .
+	docker build -t $(backend_image_name) --target backend .
 
 # Build the projects docker images for development.
 build_dev: test

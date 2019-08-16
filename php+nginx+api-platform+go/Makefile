@@ -47,19 +47,19 @@ default: build
 
 # Install all dependencies, including dev dependencies.
 install: build_deps
-	docker run -it -v $(CURDIR)/api:/var/app -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins
+	docker run -it -v $(CURDIR)/api:/var/app -u "$(uid):$(gid)" $(deps_image_name) install
 
 # Update all dependencies, including dev dependencies.
 update: build_deps
-	docker run -it -v $(CURDIR)/api:/var/app $(deps_image_name) update --no-plugins
+	docker run -it -v $(CURDIR)/api:/var/app $(deps_image_name) update
 
 # Add a dependency package.
 add_dep: build_deps
-	docker run -it -v $(CURDIR)/api:/var/app $(deps_image_name) require --no-plugins $(package)
+	docker run -it -v $(CURDIR)/api:/var/app $(deps_image_name) require $(package)
 
 # Add a dev-only dependency package.
 add_dev_dep: build_deps
-	docker run -it -v $(CURDIR)/api:/var/app $(deps_image_name) require --no-plugins --dev $(package)
+	docker run -it -v $(CURDIR)/api:/var/app $(deps_image_name) require --dev $(package)
 
 # Test our package for production.
 test: destroy build_test create_docker_network
@@ -93,8 +93,8 @@ build_test_dev:
 
 # Build the projects docker images for production.
 build: test
-	docker build -t $(server_image_name) --cache-from=$(server_remote_repo) --target server .
-	docker build -t $(backend_image_name) --cache-from=$(backend_remote_repo) --target backend .
+	docker build -t $(server_image_name) --target server .
+	docker build -t $(backend_image_name) --target backend .
 
 # Build the projects docker images for development.
 build_dev: test
@@ -110,6 +110,7 @@ create_docker_network:
 run: destroy build create_docker_network
 	docker run -d --network=$(docker_network_name) --name $(docker_backend_name) $(backend_image_name)
 	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) $(server_image_name)
+	docker logs -f $(docker_server_name)
 
 # Spin up a dev ready copy of the app, mounting local files, and watching backend logs.
 run_dev: destroy install build_dev create_docker_network

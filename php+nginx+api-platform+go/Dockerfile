@@ -1,6 +1,9 @@
 # Set arguments to set and change software versions.
 ARG NGINX_VERSION=1.17
 ARG PHP_VERSION=7.3
+ARG COMPOSER_VERSION=1.9
+
+FROM composer:${COMPOSER_VERSION} as installer-base
 
 # Build the base nginx image to use to serve assets
 # and proxy any php file requests to the backend.
@@ -122,15 +125,18 @@ COPY --chown=www-data:www-data api/.env.dist api/symfony.lock api/composer.json 
 
 USER www-data
 
+ENV APP_ENV=dev
+
 # Create an installer image to handle composer packages and running of composer.
 FROM php as installer
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
-COPY --from=composer:1.9 /usr/bin/composer /usr/local/bin/composer
+COPY --from=installer-base /usr/bin/composer /usr/local/bin/composer
 
 RUN set -eux; \
     sed -i -E "s/allow_url_fopen\s*=\s*[A-Za-z]+/allow_url_fopen = On/g" $PHP_INI_DIR/php.ini; \
+    sed -i -E "s/memory_limit\s*=\s*.*/memory_limit = -1/g" $PHP_INI_DIR/php.ini; \
     composer global require "symfony/flex" --prefer-dist --no-progress --no-suggest --classmap-authoritative;
 
 
@@ -152,16 +158,20 @@ RUN set -eux; \
 # Extend the installer image to build dependencies for production.
 FROM installer as prod_deps
 
+ENV APP_ENV=prod
+
 # Run any required composer scripts to build your dependencies.
 RUN set -eux; \
     composer install --no-dev --prefer-dist --no-suggest --no-interaction; \
-    composer clear-cache; \
-    composer dump-autoload --classmap-authoritative --no-dev
+    composer dump-autoload --classmap-authoritative --no-dev; \
+    composer clear-cache
 
 # Setup our backend image.
 FROM php as backend
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
+
+ENV APP_ENV=prod
 
 EXPOSE 9000
 

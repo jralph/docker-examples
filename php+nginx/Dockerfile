@@ -1,6 +1,9 @@
 # Set arguments to set and change software versions.
 ARG NGINX_VERSION=1.17
 ARG PHP_VERSION=7.3
+ARG COMPOSER_VERSION=1.9
+
+FROM composer:${COMPOSER_VERSION} as installer-base
 
 # Build the base nginx image to use to serve assets
 # and proxy any php file requests to the backend.
@@ -123,7 +126,7 @@ FROM php as installer
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
-COPY --from=composer:1.9 /usr/bin/composer /usr/local/bin/composer
+COPY --from=installer-base /usr/bin/composer /usr/local/bin/composer
 
 ENV PATH="/home/www-data/bin:${PATH}"
 
