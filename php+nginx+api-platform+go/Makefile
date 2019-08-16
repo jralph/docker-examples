@@ -1,6 +1,6 @@
 .PHONY: install update add_dep add_dev_dep test build_deps build_test build create_docker_network run run_dev destroy push docker_compose
 
-project_name ?= docker-php-symfony-example
+project_name ?= docker-php-apiplatform-go-example
 
 # Set image names to use when building docker images.
 test_image_name ?= $(project_name)-test

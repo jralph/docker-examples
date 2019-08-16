@@ -125,6 +125,9 @@ COPY --chown=www-data:www-data api/.env.dist api/symfony.lock api/composer.json 
 
 USER www-data
 
+RUN set -eux; \
+    mkdir /var/app/var
+
 ENV APP_ENV=dev
 
 # Create an installer image to handle composer packages and running of composer.
@@ -170,6 +173,7 @@ RUN set -eux; \
 FROM php as backend
 
 COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
+COPY --from=prod_deps --chown=www-data:www-data /var/app/var var/
 
 ENV APP_ENV=prod
 
@@ -185,6 +189,7 @@ FROM installer as test
 COPY --chown=www-data:www-data api/tests tests/
 COPY --chown=www-data:www-data api/phpunit.xml.dist .
 COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
+COPY --from=dev_deps --chown=www-data:www-data /var/app/var var/
 
 ENV APP_ENV=test
 
