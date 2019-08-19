@@ -4,17 +4,17 @@ namespace App\Tests;
 
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
-class ExampleWebTest extends WebTestCase {
-    /**
-     * @dataProvider urlApiProvider
-     */
-    public function testAPIWorks($url) {
+class ExampleWebTest extends WebTestCase
+{
+    public function testAPIWorks() {
         $client = self::createClient([]);
-        $client->request('GET', $url, [], [], []);
+        $client->request('GET', '/', [], [], []);
         $this->assertTrue($client->getResponse()->isSuccessful());
     }
 
-    public function urlApiProvider() {
-        yield ['/'];
+    public function testAPIDoesntWork() {
+        $client = self::createClient([]);
+        $client->request('GET', '/error', [], [], []);
+        $this->assertTrue($client->getResponse()->isServerError());
     }
 }
