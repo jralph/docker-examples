@@ -109,8 +109,8 @@ create_docker_network:
 # Spin up a production ready copy of the app.
 run: destroy build create_docker_network
 	docker run -d --network=$(docker_network_name) -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=project_db --name $(docker_db_name) mysql:5.7
-	docker run -it busybox sleep 10
-	docker run -it --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --entrypoint php $(docker_backend_name) bin/console doctrine:schema:create
+	docker run busybox sleep 10
+	docker run --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --entrypoint php $(docker_backend_name) bin/console doctrine:schema:create
 	docker run -d --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --name $(docker_backend_name) $(backend_image_name)
 	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) $(server_image_name)
 	docker logs -f $(docker_server_name)
@@ -118,8 +118,8 @@ run: destroy build create_docker_network
 # Spin up a dev ready copy of the app, mounting local files, and watching backend logs.
 run_dev: destroy install build_dev create_docker_network
 	docker run -d --network=$(docker_network_name) -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=project_db --name $(dev_docker_db_name) mysql:5.7
-	docker run -it busybox sleep 10
-	docker run -it --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --entrypoint php $(dev_docker_backend_name) bin/console doctrine:schema:create
+	docker run busybox sleep 10
+	docker run --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --entrypoint php $(dev_docker_backend_name) bin/console doctrine:schema:create
 	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --name $(dev_docker_backend_name) -v $(CURDIR)/api:/var/app $(dev_backend_image_name)
 	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(dev_docker_backend_name):9000 --name $(dev_docker_server_name) -v $(CURDIR)/api/public:/var/app/public $(dev_server_image_name)
 	docker logs -f $(dev_docker_backend_name)

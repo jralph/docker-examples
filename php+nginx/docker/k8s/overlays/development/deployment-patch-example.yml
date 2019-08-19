@@ -3,10 +3,10 @@
   value: 1
 - op: replace
   path: /spec/template/spec/containers/0/image
-  value: pmconnect/docker-php-example-server:latest # Add your built and pushed server image here.
+  value: SERVER_IMAGE # Add your built and pushed server image here.
 - op: replace
   path: /spec/template/spec/containers/1/image
-  value: pmconnect/docker-php-example-backend:latest # Add your built and pushed backend image here.
+  value: BACKEND_IMAGE # Add your built and pushed backend image here.
 - op: add
   path: /spec/template/spec/volumes
   value: []
