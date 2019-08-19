@@ -138,8 +138,7 @@ COPY --from=installer-base /usr/bin/composer /usr/local/bin/composer
 
 RUN set -eux; \
     sed -i -E "s/allow_url_fopen\s*=\s*[A-Za-z]+/allow_url_fopen = On/g" $PHP_INI_DIR/php.ini; \
-    sed -i -E "s/memory_limit\s*=\s*.*/memory_limit = -1/g" $PHP_INI_DIR/php.ini; \
-    composer global require "symfony/flex" --prefer-dist --no-progress --no-suggest --classmap-authoritative;
+    sed -i -E "s/memory_limit\s*=\s*.*/memory_limit = -1/g" $PHP_INI_DIR/php.ini
 
 ENV PATH="/home/www-data/.composer/vendor/bin:./bin:${PATH}"
 
@@ -158,7 +157,7 @@ RUN set -eux; \
     bin/phpunit install
 
 # Extend the installer image to build dependencies for production.
-FROM installer as prod_deps
+FROM dev_deps as prod_deps
 
 # Run any required composer scripts to build your dependencies.
 RUN set -eux; \
@@ -177,13 +176,11 @@ EXPOSE 9000
 HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
 
 # Extend the backend php image to be able to run our tests.
-FROM installer as test
+FROM dev_deps as test
 
 # Copy over any requirements to run tests.
 # This could be extra binaries build in your dev deps (such as vendor folder or bin folders).
 COPY --chown=www-data:www-data tests tests/
 COPY --chown=www-data:www-data phpunit.xml.dist .
-COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
-COPY --from=dev_deps --chown=www-data:www-data /var/app/var var/
 
 ENTRYPOINT ["/var/app/bin/phpunit"]
