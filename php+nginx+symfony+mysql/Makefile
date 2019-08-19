@@ -135,7 +135,9 @@ destroy:
 dockerapp:
 	@docker app render --set uid=$(uid) --set gid=$(gid)
 
-docker-compose.yml:
+docker-php-example.dockerapp:
+
+docker-compose.yml: docker-php-example.dockerapp
 	docker app render --set uid=$(uid) --set gid=$(gid) > docker-compose.yml
 
 k8s_dev: destroy install build test
