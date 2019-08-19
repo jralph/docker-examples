@@ -68,11 +68,11 @@ create_docker_network:
 
 # Install all dependencies, including dev dependencies.
 install: build_deps
-	docker run -it -v $(CURDIR):/var/app:cached -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
+	docker run -v $(CURDIR):/var/app:cached -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
 
 # Update all dependencies, including dev dependencies.
 update: build_deps
-	docker run -it -v $(CURDIR):/var/app:cached $(deps_image_name) update --no-plugins --ignore-platform-reqs
+	docker run -v $(CURDIR):/var/app:cached $(deps_image_name) update --no-plugins --ignore-platform-reqs
 
 # Add a dependency package.
 add_dep: build_deps
@@ -84,11 +84,11 @@ add_dev_dep: build_deps
 
 # Test our package for production.
 test: destroy build_test create_docker_network
-	docker run -it --network=$(docker_network_name) $(test_image_name)
+	docker run --network=$(docker_network_name) $(test_image_name)
 
 # Test our package locally.
 test_dev: destroy build_test_dev create_docker_network
-	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app:delegated $(dev_test_image_name)
+	docker run --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app:delegated $(dev_test_image_name)
 
 # Spin up a production ready copy of the app.
 run: destroy build create_docker_network

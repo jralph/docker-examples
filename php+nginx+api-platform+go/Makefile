@@ -64,19 +64,19 @@ add_dev_dep: build_deps
 # Test our package for production.
 test: destroy build_test create_docker_network
 	docker run -d --network=$(docker_network_name) -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=project_db --name $(docker_db_name) mysql:5.7
-	docker run -it busybox sleep 10
-	docker run -it --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --entrypoint php $(test_image_name) bin/console doctrine:schema:create
-	docker run -it --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --entrypoint php $(test_image_name) bin/console doctrine:fixtures:load -n
-	docker run -it --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db $(test_image_name)
+	docker run busybox sleep 10
+	docker run --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --entrypoint php $(test_image_name) bin/console doctrine:schema:create
+	docker run --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --entrypoint php $(test_image_name) bin/console doctrine:fixtures:load -n
+	docker run --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db $(test_image_name)
 	docker kill $(docker_db_name)
 
 # Test our package locally.
 test_dev: destroy build_test_dev create_docker_network
 	docker run -d --network=$(docker_network_name) -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=project_db --name $(dev_docker_db_name) mysql:5.7
-	docker run -it busybox sleep 10
-	docker run -it --network=$(docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR)/api:/var/app -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --entrypoint php $(dev_test_image_name) bin/console doctrine:schema:create
-	docker run -it --network=$(docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR)/api:/var/app -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --entrypoint php $(dev_test_image_name) bin/console doctrine:fixtures:load -n
-	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR)/api:/var/app -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db $(dev_test_image_name)
+	docker run busybox sleep 10
+	docker run --network=$(docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR)/api:/var/app:delegated -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --entrypoint php $(dev_test_image_name) bin/console doctrine:schema:create
+	docker run --network=$(docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR)/api:/var/app:delegated -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db --entrypoint php $(dev_test_image_name) bin/console doctrine:fixtures:load -n
+	docker run --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR)/api:/var/app:delegated -e DATABASE_URL=mysql://root:root@$(dev_docker_db_name):3306/project_db $(dev_test_image_name)
 	docker kill $(dev_docker_db_name)
 
 # Build an image to use to handle all installation and dependency management.
