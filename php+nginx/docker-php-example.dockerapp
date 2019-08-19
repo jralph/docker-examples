@@ -1,6 +1,6 @@
 # This section contains your application metadata.
 # Version of the application
-version: 0.1.0
+version: 1.0.0
 # Name of the application
 name: docker-php-example
 # A short description of the application
@@ -8,7 +8,7 @@ description:
 # List of application maintainers with name and email for each
 maintainers:
   - name: Joe
-    email: 
+    email: joseph@pmconnect.co.uk
 
 ---
 # This section contains the Compose file that describes your application services.
@@ -24,11 +24,10 @@ services:
     user: "${uid}:${gid}"
     volumes:
     - type: bind
-      source: $$PWD/public/img/
+      source: $$PWD/public/
       target: /var/app/public/img
-    - type: bind
-      source: $$PWD/public/favicon.ico
-      target: /var/app/public/favicon.ico
+      read_only: true
+      consistency: delegated
     networks:
     - app
     ports:
@@ -53,6 +52,7 @@ services:
     - type: bind
       source: $$PWD
       target: /var/app
+      consistency: cached
     networks:
     - app
   deps:
@@ -64,6 +64,7 @@ services:
     - type: bind
       source: $$PWD
       target: /var/app
+      consistency: cached
     networks:
     - app
   test:
@@ -78,6 +79,7 @@ services:
     - type: bind
       source: $$PWD
       target: /var/app
+      consistency: delegated
     networks:
     - app
 

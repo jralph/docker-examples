@@ -1,25 +1,23 @@
 .PHONY: install update add_dep add_dev_dep test build_deps build_test build create_docker_network run run_dev destroy push docker_compose
 
-# Set image names to use when building docker images.
-test_image_name ?= docker-php-example-test
-deps_image_name ?= docker-php-example-deps
-backend_image_name ?= docker-php-example-backend
-server_image_name ?= docker-php-example-server
-dev_backend_image_name ?= docker-php-example-dev-backend
-dev_server_image_name ?= docker-php-example-dev-server
-dev_test_image_name ?= docker-php-example-dev-test
+project_name ?= docker-php-example
 
-# Set the remote repo/image names to push images to.
-server_remote_repo ?= pmconnect/docker-php-example-server
-backend_remote_repo ?= pmconnect/docker-php-example-backend
+# Set image names to use when building docker images.
+test_image_name ?= $(project_name)-test
+deps_image_name ?= $(project_name)-deps
+backend_image_name ?= $(project_name)-backend
+server_image_name ?= $(project_name)-server
+dev_backend_image_name ?= $(project_name)-dev-backend
+dev_server_image_name ?= $(project_name)-dev-server
+dev_test_image_name ?= $(project_name)-dev-test
 
 # Specify local docker network names.
-docker_network_name ?= docker-php-example
-docker_server_name ?= docker-php-example-server
-docker_backend_name ?= docker-php-example-backend
-dev_docker_network_name ?= docker-php-example-dev
-dev_docker_server_name ?= docker-php-example-dev-server
-dev_docker_backend_name ?= docker-php-example-dev-backend
+docker_network_name ?= $(project_name)
+docker_server_name ?= $(project_name)-server
+docker_backend_name ?= $(project_name)-backend
+dev_docker_network_name ?= $(project_name)-dev
+dev_docker_server_name ?= $(project_name)-dev-server
+dev_docker_backend_name ?= $(project_name)-dev-backend
 
 # Local docker host address.
 host_address ?= host.docker.internal
@@ -70,19 +68,19 @@ create_docker_network:
 
 # Install all dependencies, including dev dependencies.
 install: build_deps
-	docker run -it -v $(CURDIR):/var/app -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
+	docker run -it -v $(CURDIR):/var/app:cached -u "$(uid):$(gid)" $(deps_image_name) install --no-plugins --ignore-platform-reqs
 
 # Update all dependencies, including dev dependencies.
 update: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) update --no-plugins --ignore-platform-reqs
+	docker run -it -v $(CURDIR):/var/app:cached $(deps_image_name) update --no-plugins --ignore-platform-reqs
 
 # Add a dependency package.
 add_dep: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) require --no-plugins --ignore-platform-reqs $(package)
+	docker run -it -v $(CURDIR):/var/app:cached $(deps_image_name) require --no-plugins --ignore-platform-reqs $(package)
 
 # Add a dev-only dependency package.
 add_dev_dep: build_deps
-	docker run -it -v $(CURDIR):/var/app $(deps_image_name) require --no-plugins --ignore-platform-reqs --dev $(package)
+	docker run -it -v $(CURDIR):/var/app:cached $(deps_image_name) require --no-plugins --ignore-platform-reqs --dev $(package)
 
 # Test our package for production.
 test: destroy build_test create_docker_network
@@ -90,7 +88,7 @@ test: destroy build_test create_docker_network
 
 # Test our package locally.
 test_dev: destroy build_test_dev create_docker_network
-	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app $(dev_test_image_name)
+	docker run -it --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app:delegated $(dev_test_image_name)
 
 # Spin up a production ready copy of the app.
 run: destroy build create_docker_network
@@ -99,8 +97,8 @@ run: destroy build create_docker_network
 
 # Spin up a dev ready copy of the app, mounting local files, and watching backend logs.
 run_dev: destroy install build_dev create_docker_network
-	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(dev_docker_backend_name) -v $(CURDIR):/var/app $(dev_backend_image_name)
-	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(dev_docker_backend_name):9000 --name $(dev_docker_server_name) -v $(CURDIR)/public:/var/app/public $(dev_server_image_name)
+	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -e XDEBUG_CONFIG="remote_enable=1 remote_host=$(host_address) remote_port=$(xdebug_port)" --name $(dev_docker_backend_name) -v $(CURDIR):/var/app:cached $(dev_backend_image_name)
+	docker run -d --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -p $(server_port):8080 -e PHP_HOST=$(dev_docker_backend_name):9000 --name $(dev_docker_server_name) -v $(CURDIR)/public:/var/app/public:delegated $(dev_server_image_name)
 	docker logs -f $(dev_docker_backend_name)
 
 # Destroy any setup containers for the app.
@@ -121,12 +119,3 @@ k8s_dev: destroy install build test
 	sed -i "s#/path/to/project/dir#$(CURDIR)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
 	sed -i "s#pmconnect/docker-php-example-server:latest#$(server_image_name)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
 	sed -i "s#pmconnect/docker-php-example-backend:latest#$(backend_image_name)#g" $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
-
-
-# Push the docker images to the pmconnect repos.
-push: build
-	docker tag $(server_image_name) $(server_remote_repo)
-	docker tag $(backend_image_name) $(backend_remote_repo)
-	docker push $(server_remote_repo)
-	docker push $(backend_remote_repo)
-
