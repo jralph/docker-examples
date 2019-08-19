@@ -1,0 +1,103 @@
+# This section contains your application metadata.
+# Version of the application
+version: 1.0.0
+# Name of the application
+name: docker-php-example
+# A short description of the application
+description: 
+# List of application maintainers with name and email for each
+maintainers:
+  - name: Joe
+    email: joseph@pmconnect.co.uk
+
+---
+# This section contains the Compose file that describes your application services.
+version: "3.6"
+services:
+  server:
+    build:
+      context: .
+      target: server
+      args:
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
+    volumes:
+    - type: bind
+      source: $$PWD/public/
+      target: /var/app/public/img
+      read_only: true
+      consistency: delegated
+    networks:
+    - app
+    ports:
+    - 8080
+    environment:
+      PHP_HOST: backend:9000
+    depends_on:
+    - backend
+    - deps
+  backend:
+    build:
+      context: .
+      target: backend
+      args:
+        with_xdebug: "true"
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
+    environment:
+      XDEBUG_CONFIG: remote_enable=1 remote_host=${host_address} remote_port=${xdebug_port}
+      DATABASE_URL: mysql://root:root@mysql:3306/app
+    volumes:
+    - type: bind
+      source: $$PWD
+      target: /var/app
+      consistency: cached
+    networks:
+    - app
+    depends_on:
+    - mysql
+  mysql:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: app
+  deps:
+    build:
+      context: .
+      target: dev_deps
+    command: "install"
+    volumes:
+    - type: bind
+      source: $$PWD
+      target: /var/app
+      consistency: cached
+    networks:
+    - app
+  test:
+    build:
+      context: .
+      target: test
+      args:
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
+    volumes:
+    - type: bind
+      source: $$PWD
+      target: /var/app
+      consistency: delegated
+    networks:
+    - app
+
+networks:
+  app:
+
+---
+host_address: host.docker.internal
+xdebug_port: 9000
+uid: 82
+gid: 82
+# This section contains the default values for your application parameters.
+

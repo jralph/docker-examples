@@ -1,0 +1,5 @@
+vendor/
+var/
+*.dockerapp
+Makefile
+README.md

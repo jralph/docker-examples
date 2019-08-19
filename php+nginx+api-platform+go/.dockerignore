@@ -1,8 +1,0 @@
-vendor/
-*.dockerapp
-Makefile
-README.md
-var/
-.env
-.env.local
-.phpunit

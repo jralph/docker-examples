@@ -31,14 +31,12 @@ Basic unit tests are also included and are runnable through the makefile or thro
 - Makefile
 - Unit Tests
 
-## php+nginx+symfony+go
+## php+nginx+symfony+mysql
 
-This example includes the setup of a symfony php project and gettign it up and running using nginx
+This example includes the setup of a symfony php project and getting it up and running using nginx
 and php-fpm, in separate containers.
 
-It also includes using Go applications to run as queue listeners/workers to respond to symfony events/tasks.
-
-It includes examples for usign docker-app+docker-compose, kubernetes, standalone docker, and a makefile for ease of use.
+It includes examples for using docker-app+docker-compose, kubernetes, standalone docker, and a makefile for ease of use.
 
 Basic unit tests are included as an example.
 
@@ -51,4 +49,4 @@ Basic unit tests are included as an example.
 - Makefile
 - Unit Tests
 - Symfony Framework
-- Go Queue/Job Workers
+- MySQL
