@@ -121,7 +121,7 @@ COPY --chown=www-data:www-data templates ./templates
 COPY --chown=www-data:www-data translations ./translations
 COPY --chown=www-data:www-data .env symfony.lock composer.json composer.lock ./
 
-ENV PATH="/var/app/bin:${PATH}"
+ENV PATH="${PATH}:/var/app/bin"
 
 USER www-data
 
@@ -143,7 +143,7 @@ RUN set -eux; \
     sed -i -E "s/allow_url_fopen\s*=\s*[A-Za-z]+/allow_url_fopen = On/g" $PHP_INI_DIR/php.ini; \
     sed -i -E "s/memory_limit\s*=\s*.*/memory_limit = -1/g" $PHP_INI_DIR/php.ini
 
-ENV PATH="/home/www-data/.composer/vendor/bin:${PATH}"
+ENV PATH="${PATH}:/home/www-data/.composer/vendor/bin"
 
 # This is where you could run any extra commands to configure installers. Such as authenticating composer to private repos.
 
@@ -157,7 +157,7 @@ FROM installer as dev_deps
 RUN set -eux; \
     composer install --prefer-dist --no-suggest --no-interaction; \
     composer clear-cache; \
-    /usr/local/bin/php ./bin/phpunit install
+    phpunit install
 
 # Extend the installer image to build dependencies for production.
 FROM dev_deps as prod_deps
@@ -186,4 +186,4 @@ FROM dev_deps as test
 COPY --chown=www-data:www-data tests tests/
 COPY --chown=www-data:www-data phpunit.xml.dist .
 
-ENTRYPOINT ["/usr/local/bin/php", "/var/app/bin/phpunit"]
+ENTRYPOINT ["/var/app/bin/phpunit"]
