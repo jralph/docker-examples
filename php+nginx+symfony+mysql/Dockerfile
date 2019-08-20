@@ -186,4 +186,4 @@ FROM dev_deps as test
 COPY --chown=www-data:www-data tests tests/
 COPY --chown=www-data:www-data phpunit.xml.dist .
 
-ENTRYPOINT ["/var/app/bin/phpunit"]
+ENTRYPOINT ["/usr/local/bin/php", "/var/app/bin/phpunit"]
