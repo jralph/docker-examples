@@ -126,7 +126,8 @@ ENV PATH="./bin:${PATH}"
 USER www-data
 
 RUN set -eux; \
-    mkdir /var/app/var
+    chmod +x bin/console bin/phpunit; \
+    mkdir var
 
 # Alias the base composer image. Used for easy installing of composer through copying.
 FROM composer:${COMPOSER_VERSION} as installer-base
