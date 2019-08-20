@@ -108,7 +108,7 @@ create_docker_network:
 run: destroy build create_docker_network
 	docker run -d --network=$(docker_network_name) -e MYSQL_ROOT_PASSWORD=root -e MYSQL_DATABASE=project_db --name $(docker_db_name) mysql:5.7
 	docker run busybox sleep 10
-	docker run -d --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db --name $(docker_backend_name) $(backend_image_name)
+	docker run -d --network=$(docker_network_name) -e DATABASE_URL=mysql://root:root@$(docker_db_name):3306/project_db -e APP_ENV=prod --name $(docker_backend_name) $(backend_image_name)
 	docker run -d --network=$(docker_network_name) -p $(server_port):8080 -e PHP_HOST=$(docker_backend_name):9000 --name $(docker_server_name) $(server_image_name)
 	docker exec -it $(docker_backend_name) bin/console doctrine:migrations:migrate --no-interaction --no-debug --allow-no-migration --all-or-nothing
 	docker logs -f $(docker_backend_name)
