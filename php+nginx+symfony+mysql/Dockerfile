@@ -157,7 +157,7 @@ FROM installer as dev_deps
 RUN set -eux; \
     composer install --prefer-dist --no-suggest --no-interaction; \
     composer clear-cache; \
-    phpunit install
+    /usr/local/bin/php ./bin/phpunit install
 
 # Extend the installer image to build dependencies for production.
 FROM dev_deps as prod_deps
