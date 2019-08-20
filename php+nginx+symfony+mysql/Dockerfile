@@ -121,7 +121,7 @@ COPY --chown=www-data:www-data templates ./templates
 COPY --chown=www-data:www-data translations ./translations
 COPY --chown=www-data:www-data .env symfony.lock composer.json composer.lock ./
 
-ENV PATH="./bin:${PATH}"
+ENV PATH="/var/app/bin:${PATH}"
 
 USER www-data
 
