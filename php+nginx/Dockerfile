@@ -3,7 +3,7 @@ ARG NGINX_VERSION=1.17
 ARG PHP_VERSION=7.3
 ARG COMPOSER_VERSION=1.9
 
-FROM composer:${COMPOSER_VERSION} as installer-base
+FROM composer:${COMPOSER_VERSION} as composer-base
 
 # Build the base nginx image to use to serve assets
 # and proxy any php file requests to the backend.
@@ -121,7 +121,7 @@ FROM php as installer
 
 # 'set -eux' ensures the below scripts run as we would expect.
 # All env variables must exist and all commands will be printed.
-COPY --from=installer-base /usr/bin/composer /usr/local/bin/composer
+COPY --from=composer-base /usr/bin/composer /usr/local/bin/composer
 
 RUN set -eux; \
     sed -i -E "s/allow_url_fopen\s*=\s*[A-Za-z]+/allow_url_fopen = On/g" $PHP_INI_DIR/php.ini; \
@@ -167,6 +167,6 @@ FROM backend as test
 # This could be extra binaries build in your dev deps (such as vendor folder or bin folders).
 COPY --chown=www-data:www-data tests tests/
 COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
+COPY --chown=www-data:www-data phpunit.xml .
 
 ENTRYPOINT ["/var/app/vendor/bin/phpunit"]
-CMD ["--bootstrap", "vendor/autoload.php", "tests"]
