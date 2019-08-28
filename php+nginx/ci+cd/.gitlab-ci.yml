@@ -1,0 +1,125 @@
+##
+# Example .gitlab-ci.yml file for using multi stage docker builds and the testing/upload/deployment process.
+#
+# The idea behind this example is to build as many of the required images in parallel as possible, to then
+# save those images to the ci for use in later tasks (such as testing and deployment).
+##
+
+# All of our builds run through docker, so we set docker as our base image.
+image: docker:19
+
+stages:
+- build    # Build all images ready for testing/deployment here.
+- test     # Test the build images and compiled code.
+- upload   # Upload build production images to remote repositories.
+- deploy   # Deploy the project.
+- verify   # Verify that the deployment was successful.
+
+variables:
+  DOCKER_BUILDKIT: 1                              # As we're using docker 19+, enable buildkit for faster builds.
+  REMOTE_BACKEND_REGISTRY: my-registry/backend    # Set the remote registry to save our backend image to.
+  REMOTE_SERVER_REGISTRY: my-registry/server      # Set the remote registry to save our server image to.
+
+# Build the backend and test images and save them to a .tar artifact for use later on.
+# We build both images here as the test image depends on the backend image.
+build:backend+test:
+  stage: build
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  artifacts:
+    expire_in: 7 days
+    paths:
+    - backend.tar
+    - test.tar
+  script:
+  - docker build --target backend --cache-from "${REMOTE_BACKEND_REGISTRY}" --tag "${CI_PROJECT_ID}-backend:${CI_COMMIT_SHORT_SHA}" .
+  - docker save --output backend.tar "${CI_PROJECT_ID}-backend:${CI_COMMIT_SHORT_SHA}"
+  - docker build --target test --cache-from "${REMOTE_BACKEND_REGISTRY}" --tag "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}" .
+  - docker save --output test.tar "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}"
+
+# Build the server image and save it as a .tar artifact for use later on.
+# We only build the server image here as it has no dependant stages.
+# This means both builds can run in parallel.
+build:server:
+  stage: build
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  artifacts:
+    expire_in: 7 days
+    paths:
+    - server.tar
+  script:
+  - docker build --target server --cache-from "${REMOTE_SERVER_REGISTRY}" --tag "${CI_PROJECT_ID}-server:${CI_COMMIT_SHORT_SHA}" .
+  - docker save --output server.tar "${CI_PROJECT_ID}-server:${CI_COMMIT_SHORT_SHA}"
+
+# Fetch the artifact from the backend and test build. This is done by specifying a dependency.
+# We also set the git strategy to none to avoid cloning the repo. We do not need this as we have a fully built image with our code already inside.
+# We only need the artifacts.
+test:phpunit:
+  stage: test
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  dependencies:
+  - build:backend+test
+  variables:
+    GIT_STRATEGY: none
+  script:
+  - docker load --input test.tar
+  - docker run -it "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}"
+
+# Upload the built images to our remote repo.
+# Again, we set the git strategy to none as we only require the artifacts.
+upload:images:
+  stage: upload
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  dependencies:
+  - build:backend+test
+  - build:server
+  variables:
+    GIT_STRATEGY: none
+  script:
+  - docker load --input backend.tar
+  - docker load --input server.tar
+  # - docker tag "${CI_PROJECT_ID}-server:${CI_COMMIT_SHORT_SHA}" "${REMOTE_SERVER_REGISTRY}:${CI_COMMIT_SHORT_SHA}"
+  # - docker tag "${CI_PROJECT_ID}-backend:${CI_COMMIT_SHORT_SHA}" "${REMOTE_BACKEND_REGISTRY}:${CI_COMMIT_SHORT_SHA}"
+  # - docker push "${REMOTE_SERVER_REGISTRY}:${CI_COMMIT_SHORT_SHA}"
+  # - docker push "${REMOTE_BACKEND_REGISTRY}:${CI_COMMIT_SHORT_SHA}"
+
+# Deploy our application to staging.
+deploy:staging:
+  stage: deploy
+  image: alpine
+  environment:
+    name: staging
+  only:
+  - develop
+  script:
+  - echo "Deployed to staging!"
+
+# Deploy our application to production.
+deploy:production:
+  stage: deploy
+  image: alpine
+  environment:
+    name: production
+  only:
+  - master
+  when: manual
+  script:
+  - echo "Deployed to production!"
+
+# Verify our application is working.
+verify:functionality:
+  stage: verify
+  image: alpine
+  script:
+  - echo "Verified deployment was successful and endpoints are working!"

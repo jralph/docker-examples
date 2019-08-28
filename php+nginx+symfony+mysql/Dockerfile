@@ -18,11 +18,7 @@ RUN set -eux; \
   mkdir /var/app; \
   adduser -u ${uid} -D -S -G www-data www-data; \
   touch /var/run/nginx.pid; \
-  chown -R www-data:www-data /var/run/nginx.pid; \
-  chown -R www-data:www-data /var/cache/nginx; \
-  chown -R www-data:www-data /etc/nginx; \
-  chown -R www-data:www-data /var/log/nginx; \
-  chown -R www-data:www-data /var/app;
+  chown -R www-data:www-data /var/run/nginx.pid /var/cache/nginx /etc/nginx /var/log/nginx /var/app
 
 USER www-data
 
@@ -96,8 +92,7 @@ RUN set -eux; \
 # All env variables must exist and all commands will be printed.
 RUN set -eux; \
   mkdir -p /var/app; \
-  chown -R www-data:www-data /var/app; \
-  chown -R www-data:www-data /usr/local/etc/php
+  chown -R www-data:www-data /var/app /usr/local/etc/php
 
 COPY docker/php/php-fpm.conf /usr/local/etc/php-fpm.conf
 COPY docker/php/www.conf /usr/local/etc/php-fpm.d/www.conf
