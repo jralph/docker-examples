@@ -168,7 +168,7 @@ WORKDIR /var/browser-tests
 
 COPY ./tests/browser/ .
 
-ENV APP_URL=http://server
+ENV APP_URL=http://server:8080
 
 ENTRYPOINT ["testcafe"]
 CMD ["chromium:headless", "./"]
@@ -182,7 +182,7 @@ WORKDIR /var/api-tests
 
 COPY ./tests/api/ .
 
-ENV APP_URL=http://server
+ENV APP_URL=http://server:8080
 ENV NODE_PATH=/usr/local/lib/node_modules
 
 ENTRYPOINT ["mocha"]

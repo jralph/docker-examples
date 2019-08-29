@@ -33,7 +33,7 @@ services:
     ports:
     - 8080
     environment:
-      PHP_HOST: backend:9000
+    - PHP_HOST=backend:9000
     depends_on:
     - backend
     - deps
@@ -96,7 +96,7 @@ services:
     depends_on:
     - server
     environment:
-      APP_URL: http://server:8080
+    - APP_URL=http://server:8080
   api-test:
     build:
       context: .
@@ -111,7 +111,7 @@ services:
     depends_on:
     - server
     environment:
-      APP_URL: http://server:8080
+    - APP_URL=http://server:8080
 
 networks:
   app:

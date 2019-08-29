@@ -56,6 +56,36 @@ build:server:
   - docker build --target server --cache-from "${REMOTE_SERVER_REGISTRY}" --tag "${CI_PROJECT_ID}-server:${CI_COMMIT_SHORT_SHA}" .
   - docker save --output server.tar "${CI_PROJECT_ID}-server:${CI_COMMIT_SHORT_SHA}"
 
+# Build the browser test image and save it as a .tar artifact for use later on.
+build:browser-tests:
+  stage: build
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  artifacts:
+    expire_in: 7 days
+    paths:
+    - browser-tests.tar
+  script:
+  - docker build --target browser-tests --tag "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker save --output browser-tests.tar "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+
+# Build the api test image and save it as a .tar artifact for use later on.
+build:api-tests:
+  stage: build
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  artifacts:
+    expire_in: 7 days
+    paths:
+    - api-tests.tar
+  script:
+  - docker build --target api-tests --tag "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker save --output api-tests.tar "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
+
 # Fetch the artifact from the backend and test build. This is done by specifying a dependency.
 # We also set the git strategy to none to avoid cloning the repo. We do not need this as we have a fully built image with our code already inside.
 # We only need the artifacts.
@@ -72,6 +102,38 @@ test:phpunit:
   script:
   - docker load --input test.tar
   - docker run -it "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}"
+
+# Fetch the browser tests artifact and load it into docker.
+# Run the browser tests using the loaded image.
+test:browser-tests:
+  stage: test
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  dependencies:
+  - build:browser-tests
+  variables:
+    GIT_STRATEGY: none
+  script:
+  - docker load --input browser-tests.tar
+  - docker run -it "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+
+# Fetch the api tests artifact and load it into docker.
+# Run the api tests using the loaded image.
+test:api-tests:
+  stage: test
+  services:
+  - docker:19-dind
+  tags:
+  - dind19
+  dependencies:
+  - build:api-tests
+  variables:
+    GIT_STRATEGY: none
+  script:
+  - docker load --input api-tests.tar
+  - docker run -it "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
 
 # Upload the built images to our remote repo.
 # Again, we set the git strategy to none as we only require the artifacts.

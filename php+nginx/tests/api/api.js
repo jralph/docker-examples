@@ -3,6 +3,7 @@ const request = require('supertest');
 req = request(`${process.env.APP_URL}`);
 
 describe('GET /', function () {
+  this.slow(200);
   it('responds with 200 OK', function (done) {
     req
       .get('/')
@@ -19,6 +20,7 @@ describe('GET /', function () {
 });
 
 describe('GET /?phpinfo', function () {
+  this.slow(200);
   it('responds with 200 OK', function (done) {
     req
       .get('/?phpinfo')
