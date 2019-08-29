@@ -2,6 +2,8 @@
 ARG NGINX_VERSION=1.17
 ARG PHP_VERSION=7.3
 ARG COMPOSER_VERSION=1.9
+ARG TESTCAFE_VERSION=1.4.2
+ARG NODE_VERSION=12
 
 FROM composer:${COMPOSER_VERSION} as composer-base
 
@@ -28,11 +30,9 @@ USER www-data
 WORKDIR /var/app/public
 
 ENV PHP_HOST=localhost:9000
-ENV NGINX_TIMEOUT=60s
-ENV NGINX_FASTCGI_READ_TIMEOUT=60
 
 ENTRYPOINT ["/bin/sh", "-c"]
-CMD ["envsubst '${PHP_HOST},${NGINX_TIMEOUT},${NGINX_FASTCGI_READ_TIMEOUT}' < /etc/nginx/conf.d/site.template > /etc/nginx/conf.d/default.conf; exec nginx -g 'daemon off;'"]
+CMD ["envsubst '${PHP_HOST}' < /etc/nginx/conf.d/site.template > /etc/nginx/conf.d/default.conf; exec nginx -g 'daemon off;'"]
 
 EXPOSE 8080
 
@@ -151,17 +151,8 @@ RUN set -eux; \
     composer clear-cache; \
     composer dump-autoload --classmap-authoritative --no-dev
 
-# Setup our backend image.
-FROM php as backend
-
-COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
-
-EXPOSE 9000
-
-HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1
-
 # Extend the backend php image to be able to run our tests.
-FROM backend as test
+FROM php as test
 
 # Copy over any requirements to run tests.
 # This could be extra binaries build in your dev deps (such as vendor folder or bin folders).
@@ -170,3 +161,38 @@ COPY --from=dev_deps --chown=www-data:www-data /var/app/vendor vendor/
 COPY --chown=www-data:www-data phpunit.xml .
 
 ENTRYPOINT ["/var/app/vendor/bin/phpunit"]
+
+FROM testcafe/testcafe:${TESTCAFE_VERSION} as browser-tests
+
+WORKDIR /var/browser-tests
+
+COPY ./tests/browser/ .
+
+ENV APP_URL=http://server
+
+ENTRYPOINT ["testcafe"]
+CMD ["chromium:headless", "./"]
+
+FROM node:${NODE_VERSION}-alpine as api-tests
+
+RUN set -eux; \
+    npm install --global supertest mocha
+
+WORKDIR /var/api-tests
+
+COPY ./tests/api/ .
+
+ENV APP_URL=http://server
+ENV NODE_PATH=/usr/local/lib/node_modules
+
+ENTRYPOINT ["mocha"]
+CMD ["./"]
+
+# Setup our backend image.
+FROM php as backend
+
+COPY --from=prod_deps --chown=www-data:www-data /var/app/vendor vendor/
+
+EXPOSE 9000
+
+HEALTHCHECK --interval=10s --timeout=1s CMD php-fpm-healthcheck || exit 1

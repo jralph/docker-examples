@@ -29,12 +29,12 @@ server {
 
     client_max_body_size 8m;
 
-    client_header_timeout ${NGINX_TIMEOUT};
-    client_body_timeout ${NGINX_TIMEOUT};
-    send_timeout ${NGINX_TIMEOUT};
-    proxy_connect_timeout ${NGINX_TIMEOUT};
-    proxy_send_timeout ${NGINX_TIMEOUT};
-    proxy_read_timeout ${NGINX_TIMEOUT};
+    client_header_timeout 60s;
+    client_body_timeout 60s;
+    send_timeout 60s;
+    proxy_connect_timeout 60s;
+    proxy_send_timeout 60s;
+    proxy_read_timeout 60s;
 
     # If we are an image/static file, try and file locally and 404 if not found.
     location ~ \.(bmp|jpeg|ttf|jpg|pict|svg|webp|css|js|svgz|png|ico|tif|tiff)$ {
@@ -58,7 +58,7 @@ server {
         fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
         fastcgi_param DOCUMENT_ROOT $realpath_root;
 
-        fastcgi_read_timeout ${NGINX_FASTCGI_READ_TIMEOUT};
+        fastcgi_read_timeout 60;
         fastcgi_ignore_client_abort on;
         fastcgi_buffer_size 8k;
         fastcgi_buffers 8 8k;

@@ -82,6 +82,36 @@ services:
       consistency: delegated
     networks:
     - app
+  browser-test:
+    build:
+      context: .
+      target: browser-tests
+    volumes:
+    - type: bind
+      source: $$PWD/tests/browser
+      target: /var/browser-tests
+      consistency: delegated
+    networks:
+    - app
+    depends_on:
+    - server
+    environment:
+      APP_URL: http://server:8080
+  api-test:
+    build:
+      context: .
+      target: api-tests
+    volumes:
+    - type: bind
+      source: $$PWD/tests/api
+      target: /var/api-tests
+      consistency: delegated
+    networks:
+    - app
+    depends_on:
+    - server
+    environment:
+      APP_URL: http://server:8080
 
 networks:
   app:

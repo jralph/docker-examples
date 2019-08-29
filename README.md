@@ -30,6 +30,9 @@ Basic unit tests are also included and are runnable through the makefile or thro
 - NGINX
 - Makefile
 - Unit Tests
+- Browser Tests (testcafe)
+- API Tests (supertest)
+- CI/CD Examples (gitlab)
 
 ## php+nginx+symfony+mysql
 

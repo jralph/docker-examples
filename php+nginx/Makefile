@@ -4,6 +4,8 @@ project_name ?= docker-php-example
 
 # Set image names to use when building docker images.
 test_image_name ?= $(project_name)-test
+browser_tests_image_name ?= $(project_name)-browser-tests
+api_tests_image_name ?= $(project_name)-api-tests
 deps_image_name ?= $(project_name)-deps
 backend_image_name ?= $(project_name)-backend
 server_image_name ?= $(project_name)-server
@@ -47,17 +49,23 @@ build_deps:
 build_test:
 	docker build -t $(test_image_name) --target test .
 
+build_browser_tests:
+	docker build -t $(browser_tests_image_name) --target browser-tests .
+
+build_api_tests:
+	docker build -t $(api_tests_image_name) --target api-tests .
+
 # Build na image to use to handle local testing.
 build_test_dev:
 	docker build -t $(dev_test_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --target test .
 
 # Build the projects docker images for production.
-build: test
+build:
 	docker build -t $(server_image_name) --target server .
 	docker build -t $(backend_image_name) --target backend .
 
 # Build the projects docker images for development.
-build_dev: test
+build_dev:
 	docker build -t $(dev_server_image_name) --build-arg uid=$(uid) --target server .
 	docker build -t $(dev_backend_image_name) --build-arg uid=$(uid) --build-arg gid=$(gid) --build-arg with_xdebug=true --target backend .
 
@@ -86,6 +94,12 @@ add_dev_dep: build_deps
 test: destroy build_test create_docker_network
 	docker run --network=$(docker_network_name) $(test_image_name)
 
+browser-tests: run build_browser_tests create_docker_network
+	docker run --network=$(docker_network_name) -e "APP_URL=http://$(docker_server_name):8080" $(browser_tests_image_name)
+
+api-tests: run build_api_tests create_docker_network
+	docker run --network=$(docker_network_name) -e "APP_URL=http://$(docker_server_name):8080" $(api_tests_image_name)
+
 # Test our package locally.
 test_dev: destroy build_test_dev create_docker_network
 	docker run --network=$(dev_docker_network_name) -u "$(uid):$(gid)" -v $(CURDIR):/var/app:delegated $(dev_test_image_name)
@@ -103,7 +117,7 @@ run_dev: destroy install build_dev create_docker_network
 
 # Destroy any setup containers for the app.
 destroy:
-	-docker container rm --force $(docker_server_name) $(docker_backend_name) $(dev_docker_server_name) $(dev_docker_backend_name)
+	-docker container rm --force $(docker_server_name) $(docker_backend_name) $(dev_docker_server_name) $(dev_docker_backend_name) $(browser_tests_image_name)
 	-docker network rm $(docker_network_name) $(dev_docker_network_name)
 
 # Build docker-compose images ready to use.
@@ -113,6 +127,9 @@ docker_compose_build:
 # Render the docker compose file with the users uid/gid already set.
 docker_compose:
 	@docker app render --set uid=$(uid) --set gid=$(gid)
+
+docker-compose.yml: docker-php-example.dockerapp
+	docker app render --set uid=$(uid) --set gid=$(gid) > docker-compose.yml
 
 k8s_dev: destroy install build test
 	/bin/cp -rf $(CURDIR)/docker/k8s/overlays/development/deployment-patch-example.yml $(CURDIR)/docker/k8s/overlays/development/deployment-patch.yml
