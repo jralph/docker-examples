@@ -53,3 +53,14 @@ Basic unit tests are included as an example.
 - Unit Tests
 - Symfony Framework
 - MySQL
+
+## go
+
+This example includes a setup of a go project that simply runs and repeats output at an interval.
+
+### Included Tech
+- Docker Compose
+- Docker App
+- Go
+- Makefile
+- Tests

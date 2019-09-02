@@ -179,9 +179,34 @@ deploy:production:
   script:
   - echo "Deployed to production!"
 
-# Verify our application is working.
-verify:functionality:
+# Fetch the browser tests artifact and load it into docker.
+# Run the browser tests using the loaded image.
+verify:browser-tests:
   stage: verify
-  image: alpine
+  services:
+    - docker:19-dind
+  tags:
+    - dind19
+  dependencies:
+    - build:browser-tests
+  variables:
+    GIT_STRATEGY: none
   script:
-  - echo "Verified deployment was successful and endpoints are working!"
+    - docker load --input browser-tests.tar
+    - docker run -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+
+# Fetch the api tests artifact and load it into docker.
+# Run the api tests using the loaded image.
+verify:api-tests:
+  stage: verify
+  services:
+    - docker:19-dind
+  tags:
+    - dind19
+  dependencies:
+    - build:api-tests
+  variables:
+    GIT_STRATEGY: none
+  script:
+    - docker load --input api-tests.tar
+    - docker run -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"

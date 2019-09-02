@@ -1,0 +1,80 @@
+# This section contains your application metadata.
+# Version of the application
+version: 0.1.0
+# Name of the application
+name: example
+# A short description of the application
+description: 
+# List of application maintainers with name and email for each
+maintainers:
+  - name: Joe
+    email: joseph@pmconnect.co.uk
+
+---
+# This section contains the Compose file that describes your application services.
+version: "3.6"
+services:
+  app:
+    build:
+      context: .
+      target: app
+      args:
+        uid: ${uid}
+        gid: ${gid}
+    user: "${uid}:${gid}"
+    volumes:
+    - type: bind
+      source: $$PWD/
+      target: /app
+      read_only: true
+      consistency: cached
+  test:
+    build:
+      context: .
+      target: base
+    volumes:
+    - type: bind
+      source: $$PWD/
+      target: /app
+      read_only: true
+      consistency: delegated
+    command: ["test", "./..."]
+  lint:
+    build:
+      context: .
+      target: base
+    volumes:
+    - type: bind
+      source: $$PWD/
+      target: /app
+      read_only: true
+      consistency: delegated
+    entrypoint: golint
+    command: ["./..."]
+  staticcheck:
+    build:
+      context: .
+      target: base
+    volumes:
+    - type: bind
+      source: $$PWD/
+      target: /app
+      read_only: true
+      consistency: delegated
+    entrypoint: staticcheck
+    command: ["./..."]
+  vet:
+    build:
+      context: .
+      target: base
+    volumes:
+    - type: bind
+      source: $$PWD/
+      target: /app
+      read_only: true
+      consistency: delegated
+    command: ["vet", "./..."]
+---
+# This section contains the default values for your application parameters.
+uid: 10001
+gid: 10001

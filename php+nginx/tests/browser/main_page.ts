@@ -2,17 +2,17 @@
 import { Selector, RequestLogger } from 'testcafe';
 
 // @ts-ignore
-const mainPageUrl = `${process.env.APP_URL}`;
+const url = `${process.env.APP_URL}`;
 
-const mainPageLogger = RequestLogger(mainPageUrl, {
+const logger = RequestLogger(url, {
     logResponseHeaders: true,
     logResponseBody: false
 });
 
 // @ts-ignore
 fixture `Example Main Page`
-    .page(mainPageUrl)
-    .requestHooks(mainPageLogger);
+    .page(url)
+    .requestHooks(logger);
 
 // @ts-ignore
 test('Test page loads', async t => {
@@ -25,5 +25,5 @@ test('Test page loads', async t => {
 // @ts-ignore
 test('Test response is 200 OK', async t => {
     await t
-        .expect(mainPageLogger.contains(r => r.response.statusCode === 200)).ok();
+        .expect(logger.contains(r => r.response.statusCode === 200)).ok();
 });
