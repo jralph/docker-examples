@@ -63,8 +63,5 @@ test_dev: build_base_dev
 run: build
 	docker run $(app_image_name)
 
-run_dev: build_dev
-	docker run $(dev_app_image_name)
-
 docker-compose.yml: example.dockerapp
 	docker app render --set uid=$(uid) --set gid=$(gid) > docker-compose.yml

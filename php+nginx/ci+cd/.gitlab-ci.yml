@@ -20,12 +20,13 @@ variables:
   REMOTE_BACKEND_REGISTRY: my-registry/backend    # Set the remote registry to save our backend image to.
   REMOTE_SERVER_REGISTRY: my-registry/server      # Set the remote registry to save our server image to.
 
+services:
+- docker:19-dind
+
 # Build the backend and test images and save them to a .tar artifact for use later on.
 # We build both images here as the test image depends on the backend image.
 build:backend+test:
   stage: build
-  services:
-  - docker:19-dind
   tags:
   - dind19
   artifacts:
@@ -44,8 +45,6 @@ build:backend+test:
 # This means both builds can run in parallel.
 build:server:
   stage: build
-  services:
-  - docker:19-dind
   tags:
   - dind19
   artifacts:
@@ -59,8 +58,6 @@ build:server:
 # Build the browser test image and save it as a .tar artifact for use later on.
 build:browser-tests:
   stage: build
-  services:
-  - docker:19-dind
   tags:
   - dind19
   artifacts:
@@ -74,8 +71,6 @@ build:browser-tests:
 # Build the api test image and save it as a .tar artifact for use later on.
 build:api-tests:
   stage: build
-  services:
-  - docker:19-dind
   tags:
   - dind19
   artifacts:
@@ -91,8 +86,6 @@ build:api-tests:
 # We only need the artifacts.
 test:phpunit:
   stage: test
-  services:
-  - docker:19-dind
   tags:
   - dind19
   dependencies:
@@ -101,14 +94,12 @@ test:phpunit:
     GIT_STRATEGY: none
   script:
   - docker load --input test.tar
-  - docker run -it "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}"
+  - docker run --rm -it "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}"
 
 # Fetch the browser tests artifact and load it into docker.
 # Run the browser tests using the loaded image.
 test:browser-tests:
   stage: test
-  services:
-  - docker:19-dind
   tags:
   - dind19
   dependencies:
@@ -117,14 +108,12 @@ test:browser-tests:
     GIT_STRATEGY: none
   script:
   - docker load --input browser-tests.tar
-  - docker run -it "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker run --rm -it "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
 
 # Fetch the api tests artifact and load it into docker.
 # Run the api tests using the loaded image.
 test:api-tests:
   stage: test
-  services:
-  - docker:19-dind
   tags:
   - dind19
   dependencies:
@@ -133,14 +122,12 @@ test:api-tests:
     GIT_STRATEGY: none
   script:
   - docker load --input api-tests.tar
-  - docker run -it "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker run --rm -it "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
 
 # Upload the built images to our remote repo.
 # Again, we set the git strategy to none as we only require the artifacts.
 upload:images:
   stage: upload
-  services:
-  - docker:19-dind
   tags:
   - dind19
   dependencies:
@@ -183,30 +170,26 @@ deploy:production:
 # Run the browser tests using the loaded image.
 verify:browser-tests:
   stage: verify
-  services:
-    - docker:19-dind
   tags:
-    - dind19
+  - dind19
   dependencies:
-    - build:browser-tests
+  - build:browser-tests
   variables:
     GIT_STRATEGY: none
   script:
-    - docker load --input browser-tests.tar
-    - docker run -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker load --input browser-tests.tar
+  - docker run --rm -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
 
 # Fetch the api tests artifact and load it into docker.
 # Run the api tests using the loaded image.
 verify:api-tests:
   stage: verify
-  services:
-    - docker:19-dind
   tags:
-    - dind19
+  - dind19
   dependencies:
-    - build:api-tests
+  - build:api-tests
   variables:
     GIT_STRATEGY: none
   script:
-    - docker load --input api-tests.tar
-    - docker run -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker load --input api-tests.tar
+  - docker run --rm -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
