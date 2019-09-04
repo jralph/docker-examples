@@ -24,6 +24,8 @@ FROM base as compiler
 ARG go_proxy
 ENV GOPROXY=${go_proxy}
 
+COPY . .
+
 RUN set -eux; \
     GOOS=linux CGO_ENABLED=0 GOGC=off GOARCH=amd64 go build -o example main.go; \
     chmod +x example

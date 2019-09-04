@@ -3,6 +3,8 @@
 #
 # The idea behind this example is to build as many of the required images in parallel as possible, to then
 # save those images to the ci for use in later tasks (such as testing and deployment).
+#
+# Each task in this ci file could be moved into gitlab includes as they all rely on environment variables.
 ##
 
 # All of our builds run through docker, so we set docker as our base image.
@@ -19,24 +21,39 @@ variables:
   DOCKER_BUILDKIT: 1                              # As we're using docker 19+, enable buildkit for faster builds.
   REMOTE_BACKEND_REGISTRY: my-registry/backend    # Set the remote registry to save our backend image to.
   REMOTE_SERVER_REGISTRY: my-registry/server      # Set the remote registry to save our server image to.
+  STAGING_APP_URL: http://my-staging-url          # Set the staging application url.
+  LIVE_APP_URL: http://my-live-url                # Set the live application url.
 
 services:
 - docker:19-dind
 
-# Build the backend and test images and save them to a .tar artifact for use later on.
-# We build both images here as the test image depends on the backend image.
-build:backend+test:
+# Before we start, set the APP_URL variable depending on which branch we're in. This is used in the verification tests.
+before_script:
+- if [[ "${CI_COMMIT_REF_NAME}" == "master" ]]; then export APP_URL=${LIVE_APP_URL}; else export APP_URL=${STAGING_APP_URL}; fi
+
+  # Build the backend image ready for production usage.
+build:backend:
   stage: build
   tags:
-  - dind19
+  - dind
   artifacts:
     expire_in: 7 days
     paths:
     - backend.tar
-    - test.tar
   script:
   - docker build --target backend --cache-from "${REMOTE_BACKEND_REGISTRY}" --tag "${CI_PROJECT_ID}-backend:${CI_COMMIT_SHORT_SHA}" .
   - docker save --output backend.tar "${CI_PROJECT_ID}-backend:${CI_COMMIT_SHORT_SHA}"
+
+# Build the phpunit test image.
+build:unit-tests:
+  stage: build
+  tags:
+  - dind
+  artifacts:
+    expire_in: 7 days
+    paths:
+    - test.tar
+  script:
   - docker build --target test --cache-from "${REMOTE_BACKEND_REGISTRY}" --tag "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}" .
   - docker save --output test.tar "${CI_PROJECT_ID}-test:${CI_COMMIT_SHORT_SHA}"
 
@@ -46,7 +63,7 @@ build:backend+test:
 build:server:
   stage: build
   tags:
-  - dind19
+  - dind
   artifacts:
     expire_in: 7 days
     paths:
@@ -59,7 +76,7 @@ build:server:
 build:browser-tests:
   stage: build
   tags:
-  - dind19
+  - dind
   artifacts:
     expire_in: 7 days
     paths:
@@ -72,7 +89,7 @@ build:browser-tests:
 build:api-tests:
   stage: build
   tags:
-  - dind19
+  - dind
   artifacts:
     expire_in: 7 days
     paths:
@@ -84,12 +101,12 @@ build:api-tests:
 # Fetch the artifact from the backend and test build. This is done by specifying a dependency.
 # We also set the git strategy to none to avoid cloning the repo. We do not need this as we have a fully built image with our code already inside.
 # We only need the artifacts.
-test:phpunit:
+test:unit-tests:
   stage: test
   tags:
-  - dind19
+  - dind
   dependencies:
-  - build:backend+test
+  - build:unit-tests
   variables:
     GIT_STRATEGY: none
   script:
@@ -101,7 +118,7 @@ test:phpunit:
 test:browser-tests:
   stage: test
   tags:
-  - dind19
+  - dind
   dependencies:
   - build:browser-tests
   variables:
@@ -115,7 +132,7 @@ test:browser-tests:
 test:api-tests:
   stage: test
   tags:
-  - dind19
+  - dind
   dependencies:
   - build:api-tests
   variables:
@@ -129,9 +146,9 @@ test:api-tests:
 upload:images:
   stage: upload
   tags:
-  - dind19
+  - dind
   dependencies:
-  - build:backend+test
+  - build:backend
   - build:server
   variables:
     GIT_STRATEGY: none
@@ -171,25 +188,31 @@ deploy:production:
 verify:browser-tests:
   stage: verify
   tags:
-  - dind19
+  - dind
   dependencies:
   - build:browser-tests
   variables:
     GIT_STRATEGY: none
+  only:
+  - develop
+  - master
   script:
   - docker load --input browser-tests.tar
-  - docker run --rm -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker run --rm -it -e APP_URL "${CI_PROJECT_ID}-browser-tests:${CI_COMMIT_SHORT_SHA}"
 
 # Fetch the api tests artifact and load it into docker.
 # Run the api tests using the loaded image.
 verify:api-tests:
   stage: verify
   tags:
-  - dind19
+  - dind
   dependencies:
   - build:api-tests
   variables:
     GIT_STRATEGY: none
+  only:
+  - develop
+  - master
   script:
   - docker load --input api-tests.tar
-  - docker run --rm -it -e APP_URL="http://my-live-url" "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
+  - docker run --rm -it -e APP_URL "${CI_PROJECT_ID}-api-tests:${CI_COMMIT_SHORT_SHA}"
