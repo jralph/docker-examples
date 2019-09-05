@@ -36,7 +36,7 @@ FROM alpine as certs
 RUN apk add -U --no-cache ca-certificates
 
 # Download an ubuntu image for the sole purpose of creating a non-root user for scratch.
-FROM ubuntu:latest as userbuilder
+FROM ubuntu:19.10 as userbuilder
 
 ARG uid=10001
 ARG gid=10001
