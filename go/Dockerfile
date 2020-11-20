@@ -36,14 +36,12 @@ FROM alpine as certs
 RUN apk add -U --no-cache ca-certificates
 
 # Download an ubuntu image for the sole purpose of creating a non-root user for scratch.
-FROM ubuntu:19.10 as userbuilder
+FROM alpine as userbuilder
 
 ARG uid=10001
 ARG gid=10001
 
-RUN set -eux; \
-    groupadd -g ${gid} scratchuser; \
-    useradd -u ${uid} -g ${gid} scratchuser
+RUN echo "scratchuser:x:10010:10010::/home/scratchuser:/bin/sh" > /scratchpasswd
 
 # Build our scratch image with the production build binary from compiler.
 FROM scratch as production
@@ -55,7 +53,7 @@ COPY --from=certs /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certifica
 COPY --from=compiler /app/example /
 
 # Import our user from our userbuilder image.
-COPY --from=userbuilder /etc/passwd /etc/passwd
+COPY --from=userbuilder /scratchpasswd /etc/passwd
 
 USER scratchuser
 
