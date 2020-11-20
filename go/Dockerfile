@@ -41,7 +41,7 @@ FROM alpine as userbuilder
 ARG uid=10001
 ARG gid=10001
 
-RUN echo "scratchuser:x:10010:10010::/home/scratchuser:/bin/sh" > /scratchpasswd
+RUN echo "scratchuser:x:${uid}:${gid}::/home/scratchuser:/bin/sh" > /scratchpasswd
 
 # Build our scratch image with the production build binary from compiler.
 FROM scratch as production
